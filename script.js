@@ -444,8 +444,8 @@ function subscribeToChat() {
 
 async function updateAuthUI(session) {
     currentUser = session?.user || null;
-    authPanel.classList.toggle("hidden", !!currentUser);
-    userPanel.classList.toggle("hidden", !currentUser);
+    if (authPanel) authPanel.classList.toggle("hidden", !!currentUser);
+    if (userPanel) userPanel.classList.toggle("hidden", !currentUser);
     if (!currentUser) return;
     const profile = await loadProfile(currentUser);
     await loadMyApplications();
