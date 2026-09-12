@@ -1,148 +1,158 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VINTAGE — Minecraft Server</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VINTAGE — Minecraft Server</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="v12-home">
-  <canvas id="particles"></canvas>
-  <div class="background"></div>
-  <div class="overlay"></div>
-  <div class="world-fog"></div>
-  <div class="vignette"></div>
-  <div class="cursor-glow"></div>
-  <div class="interactive-grid"></div>
-  <div class="interactive-orb orb-one"></div>
-  <div class="interactive-orb orb-two"></div>
+<body>
+    <canvas id="particles"></canvas>
+    <div class="background"></div>
+    <div class="overlay"></div>
+    <div class="world-fog"></div>
+    <div class="vignette"></div>
+    <div class="cursor-glow"></div>
+    <div class="interactive-grid"></div>
+    <div class="interactive-orb orb-one"></div>
+    <div class="interactive-orb orb-two"></div>
 
-  <header class="navbar v12-nav">
-    <div class="nav-inner">
-      <a class="brand" href="index.html" aria-label="VINTAGE">
-        <img src="assets/logo.png" alt="VINTAGE">
-        <span>VINTAGE</span>
-      </a>
+    <header class="navbar">
+        <a class="brand" href="#">
+            <img src="assets/logo.png" alt="VINTAGE">
+            <span>VINTAGE</span>
+        </a>
 
-      <nav class="desktop-nav">
-        <a href="index.html" class="active">ГОЛОВНА</a>
-        <a href="#about">ПРО СЕРВЕР</a>
-        <a href="guide.html">ГАЙД</a>
-        <a href="account.html">КАБІНЕТ</a>
-      </nav>
+        <nav>
+            <a href="#" class="active">Головна</a>
+            <a href="#about">Про сервер</a>
+            <a href="#how-to-play">Як грати</a>
+            <a href="#rules">Правила</a>
+            <a href="#discord">Discord</a>
+            <a href="guide.html">Гайд</a>
+            <a href="account.html">Кабінет</a>
+        </nav>
 
-      <div class="nav-actions">
-        <a href="#discord" class="nav-icon" aria-label="Discord">◉</a>
-        <a href="guide.html" class="nav-icon cube-icon" aria-label="Гайд">◆</a>
-        <a href="account.html" class="login-button"><span>♙</span> УВІЙТИ</a>
-      </div>
+        <button class="mobile-menu" aria-label="Відкрити меню">☰</button>
+    </header>
 
-      <button class="mobile-menu" aria-label="Відкрити меню">☰</button>
-    </div>
-  </header>
-
-  <main>
-    <section class="v12-hero">
-      <div class="hero-center">
-        <div class="v12-logo">
-          <img src="assets/logo.png" alt="VINTAGE">
+    <main class="hero">
+        <div class="hero-logo-wrap">
+            <img class="server-logo" src="assets/logo.png" alt="VINTAGE Server">
         </div>
 
-        <div class="v12-tagline">
-          <span>ВИЖИВАННЯ</span><i>•</i><span>РОЗВИТОК</span><i>•</i><span>СПІЛЬНОТА</span>
+        <div class="hero-content">
+            <div class="eyebrow"><span></span> MINECRAFT SURVIVAL SERVER</div>
+
+            <h1>VINTAGE</h1>
+            <p class="subtitle">TerraFirmaGreg: Modern</p>
+            <p class="description">
+                Виживання, дослідження та індустріальний прогрес.
+                Почни з простих інструментів і створи власну технологічну імперію.
+            </p>
+
+            <div class="buttons">
+                <button class="play-button" type="button" onclick="copyIP()">IP БУДЕ ДОДАНО</button>
+                <a href="#how-to-play" class="secondary-button">ЯК ГРАТИ</a>
+            </div>
+
+            <div class="server-status">
+                <span class="status-dot status-dot-muted"></span>
+                <div>
+                    <strong>Сервер готується</strong>
+                    <small id="server-ip">IP буде додано</small>
+                </div>
+                <div class="players">
+                    <b id="player-count">—</b>
+                    <small>гравців</small>
+                </div>
+            </div>
         </div>
 
-        <div class="server-bar">
-          <div class="server-state">
-            <span class="state-dot"></span>
-            <strong>СЕРВЕР ГОТУЄТЬСЯ</strong>
-          </div>
-          <div class="bar-separator"></div>
-          <div class="server-stat">
-            <span class="stat-icon">♟</span>
-            <b id="player-count">—</b><span>/ 100 ГРАВЦІВ</span>
-          </div>
-          <div class="bar-separator"></div>
-          <div class="server-stat">
-            <span class="stat-icon">▥</span>
-            <span>СТАБІЛЬНА РОБОТА</span>
-          </div>
+        <div class="scroll-hint">ПРОКРУТІТЬ ВНИЗ <span>↓</span></div>
+    </main>
+
+    <section class="features" id="about">
+        <div class="section-tag">01 — ПРО СЕРВЕР</div>
+        <h2>СВІТ <span>VINTAGE</span></h2>
+        <p class="section-description">
+            Тут кожен етап розвитку має значення — від виживання в дикій природі
+            до складних індустріальних ланцюгів.
+        </p>
+
+        <div class="feature-grid">
+            <article class="feature">
+                <div class="feature-icon">⛏</div>
+                <h3>Виживання</h3>
+                <p>Небезпечний світ, ресурси та справжнє відчуття прогресу.</p>
+            </article>
+            <article class="feature">
+                <div class="feature-icon">⚙</div>
+                <h3>Індустрія</h3>
+                <p>Будуй виробництво, автоматизуй процеси та розвивай технології.</p>
+            </article>
+            <article class="feature">
+                <div class="feature-icon">🌍</div>
+                <h3>Дослідження</h3>
+                <p>Відкривай нові території, шукай ресурси та створюй власну базу.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="info-section" id="how-to-play">
+        <div class="section-tag">02 — ПОЧАТОК</div>
+        <h2>ГОТОВИЙ <span>ГРАТИ?</span></h2>
+        <p>
+            Встанови оригінальну збірку TerraFirmaGreg: Modern через CurseForge,
+            додай сервер у Multiplayer та вирушай у пригоду.
+        </p>
+
+        <div class="install-card">
+            <div class="install-card-icon">⚙</div>
+            <div class="install-card-content">
+                <h3>TerraFirmaGreg: Modern</h3>
+                <p>
+                    Minecraft 1.20.1 • Forge • Офіційна сторінка модпака
+                </p>
+                <a
+                    class="curseforge-button"
+                    href="https://www.curseforge.com/minecraft/modpacks/terrafirmagreg-modern"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    ВІДКРИТИ CURSEFORGE ↗
+                </a>
+            </div>
         </div>
 
-        <button class="v12-connect" type="button" onclick="copyIP()">
-          <span>ПІДКЛЮЧИТИСЯ</span><b>→</b>
-        </button>
-        <div class="v12-ip" id="server-ip">IP буде додано</div>
-      </div>
-
-      <div class="feature-grid">
-        <article class="feature-card">
-          <div class="feature-icon">⚒</div>
-          <div><h3>ВИЖИВАННЯ</h3><p>Класичне виживання з економікою, квестами та цікавими подіями.</p></div>
-        </article>
-        <article class="feature-card">
-          <div class="feature-icon">♟</div>
-          <div><h3>ДРУЗІ</h3><p>Знайди нових друзів, створи свій клан та грай разом.</p></div>
-        </article>
-        <article class="feature-card">
-          <div class="feature-icon">★</div>
-          <div><h3>ПРОКАЧАЙСЯ</h3><p>Розвивай свої навички, будуй, торгуй та досягай нових висот.</p></div>
-        </article>
-        <article class="feature-card">
-          <div class="feature-icon">⬟</div>
-          <div><h3>БЕЗПЕКА</h3><p>Сучасний захист, стабільна робота та чесна гра для всіх.</p></div>
-        </article>
-      </div>
-
-      <div class="hero-bottom">
-        <div class="announcement"><span>⚑</span> Наш сервер працює 24/7!</div>
-        <a class="scroll-cue" href="#about"><span class="mouse-shape">⌾</span><small>ПРОКРУТИ ВНИЗ</small><b>⌄</b></a>
-        <a class="discord-card" href="#discord"><span class="discord-mark">◉</span><span>Приєднуйся до нашого Discord!</span><b>→</b></a>
-      </div>
+        <div class="license-notice">
+            <strong>⚠ ПОТРІБНА ЛІЦЕНЗІЙНА КОПІЯ MINECRAFT</strong>
+            <p>
+                Для гри на сервері потрібен придбаний офіційний Minecraft Java Edition
+                та обліковий запис Microsoft. Також використовуй модпак відповідно
+                до його умов ліцензії.
+            </p>
+        </div>
     </section>
 
-    <section id="about" class="v12-section">
-      <div class="section-tag">01 — ПРО СЕРВЕР</div>
-      <h2>СВІТ, ЯКИЙ <span>ХОЧЕТЬСЯ ДОСЛІДЖУВАТИ</span></h2>
-      <p>VINTAGE — це Minecraft-сервер на основі TerraFirmaGreg: Modern. Починай з кам'яних інструментів, розвивай виробництво та поступово створюй власну технологічну імперію.</p>
-      <div class="about-grid">
-        <div><b>01</b><h3>Виживання</h3><p>Ресурси, пори року, небезпеки та справжнє відчуття прогресу.</p></div>
-        <div><b>02</b><h3>Індустрія</h3><p>Від перших печей до складних виробничих ланцюгів.</p></div>
-        <div><b>03</b><h3>Спільнота</h3><p>Будуйте міста, торгуйте та розвивайте світ разом.</p></div>
-      </div>
+    <section class="info-section" id="rules">
+        <div class="section-tag">03 — ПРАВИЛА</div>
+        <h2>ГРАЙ <span>ЧЕСНО</span></h2>
+        <p>Поважай інших гравців, не руйнуй чужі споруди та дотримуйся правил сервера.</p>
     </section>
 
-    <section id="how-to-play" class="v12-section dark-section">
-      <div class="section-tag">02 — ЯК ГРАТИ</div>
-      <h2>ПОЧНИ СВІЙ <span>ШЛЯХ</span></h2>
-      <div class="steps">
-        <div><b>01</b><h3>Встанови збірку</h3><p>Перейди до гайду та підготуй TerraFirmaGreg: Modern.</p></div>
-        <div><b>02</b><h3>Створи акаунт</h3><p>Зареєструйся в кабінеті та подай заявку на whitelist.</p></div>
-        <div><b>03</b><h3>Заходь у світ</h3><p>Отримай IP після запуску сервера та приєднуйся до спільноти.</p></div>
-      </div>
+    <section class="info-section" id="discord">
+        <div class="section-tag">04 — СПІЛЬНОТА</div>
+        <h2>НАШ <span>DISCORD</span></h2>
+        <p>Тут буде посилання на Discord-сервер. Замінемо його, коли ти дасте запрошення.</p>
     </section>
 
-    <section id="rules" class="v12-section">
-      <div class="section-tag">03 — ПРАВИЛА</div>
-      <h2>ГРАЙ <span>ЧЕСНО</span></h2>
-      <div class="rules-box">
-        <p><b>01.</b> Поважай інших гравців.</p>
-        <p><b>02.</b> Не використовуй чити, експлойти та сторонні переваги.</p>
-        <p><b>03.</b> Не руйнуй чужі споруди та не кради ресурси.</p>
-        <p><b>04.</b> Адміністрація залишає за собою право захищати стабільність сервера.</p>
-      </div>
-    </section>
 
-    <section id="discord" class="v12-section discord-section">
-      <div class="section-tag">04 — СПІЛЬНОТА</div>
-      <h2>ЗАЛИШАЙСЯ <span>НА ЗВ'ЯЗКУ</span></h2>
-      <p>Новини, допомога, події та спілкування з гравцями — усе в нашому Discord.</p>
-      <a href="#" class="v12-connect small-connect">ВІДКРИТИ DISCORD <b>→</b></a>
-    </section>
-  </main>
+    <footer>
+        <p>© 2026 VINTAGE Server</p>
+    </footer>
 
-  <div id="toast-container"></div>
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
