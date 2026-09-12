@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VINTAGE — Кабінет</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <canvas id="particles"></canvas>
+    <div class="background"></div>
+    <div class="overlay"></div>
+    <div class="world-fog"></div>
+    <div class="vignette"></div>
+    <div class="cursor-glow"></div>
+    <div class="interactive-grid"></div>
+    <div class="interactive-orb orb-one"></div>
+    <div class="interactive-orb orb-two"></div>
+
+    <header class="navbar">
+        <a class="brand" href="#">
+            <img src="assets/logo.png" alt="VINTAGE">
+            <span>VINTAGE</span>
+        </a>
+
+        <nav>
+            <a href="index.html">Головна</a>
+            <a href="index.html#about">Про сервер</a>
+            <a href="index.html#how-to-play">Як грати</a>
+            <a href="index.html#rules">Правила</a>
+            <a href="index.html#discord">Discord</a>
+            <a href="account.html" class="active">Кабінет</a>
+        </nav>
+
+        <button class="mobile-menu" aria-label="Відкрити меню">☰</button>
+    </header>
+
+
+    <main class="account-page-main">
+    <section class="account-area" id="account">
+        <div class="section-tag">05 — КАБІНЕТ ГРАВЦЯ</div>
+        <h2>ВХІД У <span>VINTAGE</span></h2>
+        <p class="section-description">Зареєструйся, подай заявку на whitelist та спілкуйся з гравцями прямо на сайті.</p>
+
+        <div id="auth-panel" class="account-grid">
+            <div class="panel">
+                <div class="auth-tabs">
+                    <button id="login-tab" class="active" type="button">Вхід</button>
+                    <button id="signup-tab" type="button">Реєстрація</button>
+                </div>
+                <form id="auth-form" class="auth-form">
+                    <input id="username" type="text" placeholder="Ім'я користувача" minlength="2" maxlength="32" autocomplete="username">
+                    <input id="email" type="email" placeholder="Email" required autocomplete="email">
+                    <input id="password" type="password" placeholder="Пароль" minlength="6" required autocomplete="current-password">
+                    <button id="auth-submit" type="submit">УВІЙТИ</button>
+                    <div id="auth-message" class="auth-message"></div>
+                </form>
+            </div>
+            <div class="panel">
+                <h3>Що дає акаунт?</h3>
+                <p>Після реєстрації ти зможеш подати whitelist-заявку, бачити її статус та писати в чат спільноти.</p>
+                <p>Адміністратор переглядає заявки окремо через захищену адмін-панель.</p>
+            </div>
+        </div>
+
+        <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+        <div id="user-panel" class="account-grid hidden">
+            <div class="panel profile-panel">
+                <div class="user-badge"><div>Гравець: <strong id="current-username">—</strong><span id="current-role" class="role-label">USER</span></div><button id="logout-btn" class="ghost-button" type="button">ВИЙТИ</button></div>
+                <div class="profile-mini">
+                    <div><span>Email</span><strong id="current-email">—</strong></div>
+                    <div><span>Minecraft</span><strong id="current-minecraft">Не вказано</strong></div>
+                </div>
+                <h3>Заявка на whitelist</h3>
+                <form id="whitelist-form" class="auth-form">
+                    <input id="minecraft-nickname" type="text" placeholder="Minecraft нік" minlength="3" maxlength="16" required>
+                    <textarea id="whitelist-reason" placeholder="Чому ти хочеш приєднатися до проєкту?" minlength="10" maxlength="2000" required></textarea>
+                    <button type="submit">НАДІСЛАТИ ЗАЯВКУ</button>
+                    <div id="whitelist-message" class="auth-message"></div>
+                </form>
+                <div id="my-applications" class="application-list"></div>
+            </div>
+            <div class="panel">
+                <h3>Чат спільноти</h3>
+                <div id="chat-box" class="chat-box"></div>
+                <form id="chat-form" class="chat-send">
+                    <input id="chat-input" class="chat-input" maxlength="1000" placeholder="Написати повідомлення..." autocomplete="off">
+                    <button type="submit">НАДІСЛАТИ</button>
+                </form>
+                <div id="chat-message" class="auth-message"></div>
+            </div>
+            <div id="admin-panel" class="panel admin-panel hidden">
+                <div class="user-badge">
+                    <div>
+                        <h3>Адмін-панель — whitelist</h3>
+                        <span class="admin-subtitle">Керування заявками гравців</span>
+                    </div>
+                    <span class="status-pill">ADMIN</span>
+                </div>
+                <div class="admin-toolbar">
+                    <button class="filter-button active" data-filter="all" type="button">ВСІ</button>
+                    <button class="filter-button" data-filter="pending" type="button">ОЧІКУЮТЬ</button>
+                    <button class="filter-button" data-filter="approved" type="button">ПРИЙНЯТІ</button>
+                    <button class="filter-button" data-filter="rejected" type="button">ВІДХИЛЕНІ</button>
+                </div>
+                <div class="admin-stats">
+                    <div><b id="pending-count">0</b><span>очікують</span></div>
+                    <div><b id="approved-count">0</b><span>прийнято</span></div>
+                    <div><b id="rejected-count">0</b><span>відхилено</span></div>
+                </div>
+                <div id="admin-applications" class="application-list"></div>
+            </div>
+        </div>
+    </section>
+
+
+    </main>
+
+    <footer>
+        <p>© 2026 VINTAGE Server</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
