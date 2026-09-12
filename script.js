@@ -1,4 +1,4 @@
-const SERVER_IP = "play.example.com";
+const SERVER_IP = "";
 
 const ipElement = document.getElementById("server-ip");
 const playerCount = document.getElementById("player-count");
@@ -8,10 +8,17 @@ const grid = document.querySelector(".interactive-grid");
 const orbOne = document.querySelector(".orb-one");
 const orbTwo = document.querySelector(".orb-two");
 
-if (ipElement) ipElement.textContent = SERVER_IP;
+if (ipElement) ipElement.textContent = SERVER_IP || "IP буде додано";
 
 // Копіювання IP
 function copyIP() {
+    if (!SERVER_IP) {
+        if (typeof showToast === "function") {
+            showToast("IP сервера", "IP буде додано після запуску сервера.", "success");
+        }
+        return;
+    }
+
     navigator.clipboard.writeText(SERVER_IP)
         .then(() => {
             if (!ipElement) return;
