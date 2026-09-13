@@ -1,106 +1,156 @@
+const SUPABASE_URL = "https://mqavqelpvjfreagcxemp.supabase.co";
+const SUPABASE_KEY = "sb_publishable_eXRi9dicKYjn3EpVJmgwNw_yo38UK-0";
 const SERVER_IP = "";
+const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY) || null;
+
 const $ = (id) => document.getElementById(id);
-const ipElement = $("server-ip");
-const playerCount = $("player-count");
-const glow = document.querySelector(".cursor-glow");
-const background = document.querySelector(".background");
-const grid = document.querySelector(".interactive-grid");
-const orbOne = document.querySelector(".orb-one");
-const orbTwo = document.querySelector(".orb-two");
-const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+const qs = (s, root=document) => root.querySelector(s);
+const qsa = (s, root=document) => [...root.querySelectorAll(s)];
+const escapeHTML = (v) => String(v ?? "").replace(/[&<>\"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const fmtDate = (v) => v ? new Date(v).toLocaleString("uk-UA") : "—";
 
-if (ipElement) ipElement.textContent = SERVER_IP || "IP буде додано";
-if (playerCount) playerCount.textContent = SERVER_IP ? "— / 100" : "— / 100";
+let currentUser = null;
+let currentProfile = null;
+let chatChannel = null;
 
-function copyIP() {
-    if (!SERVER_IP) { showToast("IP сервера", "IP буде додано після запуску сервера.", "success"); return; }
-    if (!navigator.clipboard) { if (ipElement) ipElement.textContent = "IP: " + SERVER_IP; return; }
-    navigator.clipboard.writeText(SERVER_IP).then(() => {
-        if (!ipElement) return;
-        const oldText = ipElement.textContent;
-        ipElement.textContent = "IP скопійовано!";
-        setTimeout(() => { if (ipElement) ipElement.textContent = oldText; }, 1800);
-    }).catch(() => { if (ipElement) ipElement.textContent = "IP: " + SERVER_IP; });
+function showToast(title, message, type="success") {
+  const box = $("toast-container");
+  if (!box) return;
+  const el = document.createElement("div");
+  el.className = `toast ${type === "error" ? "error" : ""}`;
+  el.innerHTML = `<strong>${escapeHTML(title)}</strong><span>${escapeHTML(message)}</span>`;
+  box.appendChild(el);
+  setTimeout(() => { el.style.opacity="0"; el.style.transform="translateY(8px)"; setTimeout(()=>el.remove(),250); }, 3600);
 }
 
-// Mobile navigation
-const mobileMenu = $("mobile-menu");
-const mainNav = $("main-nav");
-mobileMenu?.addEventListener("click", () => {
-    const open = mainNav?.classList.toggle("open") ?? false;
-    mobileMenu.setAttribute("aria-expanded", String(open));
-});
-mainNav?.querySelectorAll("a").forEach(link => link.addEventListener("click", () => {
-    mainNav.classList.remove("open"); mobileMenu?.setAttribute("aria-expanded", "false");
-}));
+// ---------- Global visual effects ----------
+const glow = qs(".cursor-glow"), background = qs(".background"), grid = qs(".interactive-grid"), orbOne = qs(".orb-one"), orbTwo = qs(".orb-two");
+let mouseX=innerWidth/2, mouseY=innerHeight/2, targetX=mouseX, targetY=mouseY;
+document.addEventListener("mousemove", e=>{targetX=e.clientX; targetY=e.clientY;});
+(function cursorAnimation(){
+  mouseX += (targetX-mouseX)*.16; mouseY += (targetY-mouseY)*.16;
+  if(glow){glow.style.left=mouseX+"px"; glow.style.top=mouseY+"px";}
+  const nx=mouseX/innerWidth-.5, ny=mouseY/innerHeight-.5;
+  if(background) background.style.transform=`scale(1.06) translate(${nx*-18}px,${ny*-12}px)`;
+  if(grid) grid.style.transform=`perspective(700px) rotateX(58deg) translate(${nx*-22}px,${18+ny*-10}%) scale(1.35)`;
+  if(orbOne) orbOne.style.transform=`translate(${nx*80}px,${ny*60}px)`;
+  if(orbTwo) orbTwo.style.transform=`translate(${nx*-55}px,${ny*-45}px)`;
+  requestAnimationFrame(cursorAnimation);
+})();
+const canvas=$("particles"), ctx=canvas?.getContext("2d"); let particles=[];
+function resizeCanvas(){ if(!canvas||!ctx)return; const d=devicePixelRatio||1; canvas.width=innerWidth*d; canvas.height=innerHeight*d; canvas.style.width=innerWidth+"px"; canvas.style.height=innerHeight+"px"; ctx.setTransform(d,0,0,d,0,0); particles=Array.from({length:Math.min(85,Math.floor(innerWidth/16))},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,size:Math.random()*2.5+.6,speed:Math.random()*.35+.08,drift:(Math.random()-.5)*.25,alpha:Math.random()*.45+.15})); }
+function animateParticles(){ if(!canvas||!ctx)return; ctx.clearRect(0,0,innerWidth,innerHeight); for(const p of particles){p.y-=p.speed;p.x+=p.drift;if(p.y<-10){p.y=innerHeight+10;p.x=Math.random()*innerWidth} if(p.x<-10)p.x=innerWidth+10;if(p.x>innerWidth+10)p.x=-10;ctx.globalAlpha=p.alpha;ctx.fillStyle="#ffd269";ctx.fillRect(p.x,p.y,p.size,p.size);} requestAnimationFrame(animateParticles); }
+resizeCanvas(); animateParticles(); addEventListener("resize",resizeCanvas);
+qsa("a,button,input,textarea,select").forEach(el=>{el.addEventListener("mouseenter",()=>{if(glow){glow.style.width="190px";glow.style.height="190px"}});el.addEventListener("mouseleave",()=>{if(glow){glow.style.width="140px";glow.style.height="140px"}})});
 
-// Cursor + parallax
-let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
-let targetX = mouseX, targetY = mouseY;
-document.addEventListener("mousemove", e => { targetX = e.clientX; targetY = e.clientY; }, {passive:true});
-function cursorAnimation() {
-    mouseX += (targetX - mouseX) * 0.16; mouseY += (targetY - mouseY) * 0.16;
-    if (glow) { glow.style.left = mouseX + "px"; glow.style.top = mouseY + "px"; }
-    if (!reducedMotion) {
-        const nx = mouseX / Math.max(window.innerWidth,1) - 0.5;
-        const ny = mouseY / Math.max(window.innerHeight,1) - 0.5;
-        if (background) background.style.transform = `scale(1.06) translate(${nx * -18}px, ${ny * -12}px)`;
-        if (grid) grid.style.transform = `perspective(700px) rotateX(58deg) translate(${nx * -22}px, ${18 + ny * -10}%) scale(1.35)`;
-        if (orbOne) orbOne.style.transform = `translate(${nx * 80}px, ${ny * 60}px)`;
-        if (orbTwo) orbTwo.style.transform = `translate(${nx * -55}px, ${ny * -45}px)`;
-    }
-    requestAnimationFrame(cursorAnimation);
+// ---------- Navigation/auth state ----------
+function setNavLoggedIn(profile){
+  const auth = $("nav-auth"); if(!auth) return;
+  const adminNav=$("admin-nav"); if(adminNav) adminNav.classList.toggle("hidden", currentProfile?.role!=="admin");
+  const adminLink=$("profile-admin-link"); if(adminLink) adminLink.classList.toggle("hidden", currentProfile?.role!=="admin");
+  if(currentUser){
+    auth.innerHTML = `<a class="nav-user" href="profile.html">◉ ${escapeHTML(profile?.username || currentUser.email || "Профіль")}</a><button id="nav-logout" class="nav-login" type="button">ВИЙТИ</button>`;
+    $("nav-logout")?.addEventListener("click", async()=>{await supabaseClient?.auth.signOut(); location.href="account.html";});
+  } else {
+    auth.innerHTML = `<a class="nav-login" href="account.html">♟ УВІЙТИ</a>`;
+  }
 }
-if (!reducedMotion) cursorAnimation();
-
-// Ambient particles
-const canvas = $("particles");
-const ctx = canvas?.getContext("2d");
-let particles = [], width = 0, height = 0;
-function createParticles() {
-    particles = [];
-    const amount = Math.min(70, Math.max(12, Math.floor(window.innerWidth / 20)));
-    for (let i=0;i<amount;i++) particles.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,size:Math.random()*2.2+.5,speed:Math.random()*.3+.06,drift:(Math.random()-.5)*.22,alpha:Math.random()*.38+.12,phase:Math.random()*Math.PI*2});
+async function refreshAuth(){
+  if(!supabaseClient){setNavLoggedIn(null);return null;}
+  const {data:{session}}=await supabaseClient.auth.getSession();
+  currentUser=session?.user||null;
+  if(currentUser){
+    const {data}=await supabaseClient.from("profiles").select("id,username,minecraft_nickname,role").eq("id",currentUser.id).single();
+    currentProfile=data||null;
+  } else currentProfile=null;
+  setNavLoggedIn(currentProfile);
+  return currentUser;
 }
-function resizeCanvas(){ if(!canvas||!ctx)return; const dpr=Math.min(window.devicePixelRatio||1,2); width=window.innerWidth; height=window.innerHeight; canvas.width=width*dpr; canvas.height=height*dpr; canvas.style.width=width+"px"; canvas.style.height=height+"px"; ctx.setTransform(dpr,0,0,dpr,0,0); createParticles(); }
-function animateParticles(time){ if(!canvas||!ctx)return; ctx.clearRect(0,0,width,height); for(const p of particles){p.y-=p.speed;p.x+=p.drift;if(p.y<-10){p.y=height+10;p.x=Math.random()*width}if(p.x<-10)p.x=width+10;if(p.x>width+10)p.x=-10;const pulse=(Math.sin(time*.0015+p.phase)+1)/2;ctx.globalAlpha=p.alpha*(.55+pulse*.65);ctx.fillStyle="rgb(255 210 105)";ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;requestAnimationFrame(animateParticles)}
-window.addEventListener("resize",resizeCanvas,{passive:true}); resizeCanvas(); if(canvas&&ctx&&!reducedMotion) requestAnimationFrame(animateParticles);
+supabaseClient?.auth.onAuthStateChange((_e,session)=>{currentUser=session?.user||null; if(!currentUser){currentProfile=null;setNavLoggedIn(null);} else setTimeout(refreshAuth,0);});
 
-// Living-world dust, without duplicate IDs
-let ambientDust = $("ambient-dust");
-if (!ambientDust) { ambientDust=document.createElement("div"); ambientDust.id="ambient-dust"; document.body.appendChild(ambientDust); }
-if (!reducedMotion && !ambientDust.childElementCount) { const count=Math.min(24,Math.max(10,Math.floor(window.innerWidth/75))); for(let i=0;i<count;i++){const mote=document.createElement("span");mote.className="ambient-mote";mote.style.left=Math.random()*100+"%";mote.style.top=35+Math.random()*65+"%";mote.style.animationDuration=10+Math.random()*13+"s";mote.style.animationDelay=-Math.random()*18+"s";mote.style.transform=`scale(${.5+Math.random()*1.5})`;ambientDust.appendChild(mote)}}
+const mobileMenu=$("mobile-menu");
+mobileMenu?.addEventListener("click",()=>$("site-nav")?.classList.toggle("open"));
+qsa("#site-nav a").forEach(a=>a.addEventListener("click",()=>$("site-nav")?.classList.remove("open")));
 
-// Smooth world depth
-if (!reducedMotion && background) { let scrollYTarget=window.scrollY, scrollSmooth=scrollYTarget; window.addEventListener("scroll",()=>{scrollYTarget=window.scrollY},{passive:true}); function worldDepth(){scrollSmooth+=(scrollYTarget-scrollSmooth)*.06;background.style.backgroundPosition=`calc(50% + ${mouseX/Math.max(window.innerWidth,1)*1.2-.6}%) calc(50% + ${scrollSmooth*.018}px)`;requestAnimationFrame(worldDepth)} worldDepth(); }
+// ---------- Home ----------
+function copyIP(){
+  if(!SERVER_IP){showToast("IP сервера","IP буде додано після запуску сервера.");return;}
+  navigator.clipboard?.writeText(SERVER_IP).then(()=>showToast("Скопійовано","IP сервера скопійовано."));
+}
+window.copyIP=copyIP;
 
-// Supabase
-const SUPABASE_URL="https://mqavqelpvjfreagcxemp.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY="sb_publishable_eXRi9dicKYjn3EpVJmgwNw_yo38UK-0";
-const supabaseClient=window.supabase?.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
-if(!supabaseClient) console.error("Supabase JS library не завантажилась.");
+// ---------- Auth page ----------
+let authMode="login";
+function setupAuthPage(){
+  const form=$("auth-form"); if(!form)return;
+  if(currentUser){ location.replace("profile.html"); return; }
+  const loginTab=$("login-tab"), signupTab=$("signup-tab"), username=$("username"), email=$("email"), password=$("password"), submit=$("auth-submit"), msg=$("auth-message");
+  const setMode=(m)=>{authMode=m;const s=m==="signup";loginTab?.classList.toggle("active",!s);signupTab?.classList.toggle("active",s);if(username){username.classList.toggle("hidden",!s);username.required=s;}if(password)password.autocomplete=s?"new-password":"current-password";if(submit)submit.textContent=s?"СТВОРИТИ АКАУНТ":"УВІЙТИ";if(msg)msg.textContent="";};
+  loginTab?.addEventListener("click",()=>setMode("login")); signupTab?.addEventListener("click",()=>setMode("signup")); setMode("login");
+  form.addEventListener("submit",async e=>{e.preventDefault();if(!supabaseClient)return;msg.textContent="Обробка...";try{
+    if(authMode==="signup"){
+      const {data,error}=await supabaseClient.auth.signUp({email:email.value.trim(),password:password.value,options:{data:{username:username.value.trim()}}});if(error)throw error;
+      msg.textContent=data.session?"Акаунт створено.":"Акаунт створено. Перевір email, якщо потрібне підтвердження."; if(data.session)location.href="profile.html";
+    }else{const {error}=await supabaseClient.auth.signInWithPassword({email:email.value.trim(),password:password.value});if(error)throw error;location.href="profile.html";}
+  }catch(err){msg.textContent=err.message||"Сталася помилка.";showToast("Помилка",err.message||"Сталася помилка.","error");}});
+}
 
-const authPanel=$("auth-panel"), userPanel=$("user-panel"), adminPanel=$("admin-panel"), authForm=$("auth-form"), authMessage=$("auth-message"), usernameInput=$("username"), emailInput=$("email"), passwordInput=$("password"), authSubmit=$("auth-submit"), loginTab=$("login-tab"), signupTab=$("signup-tab"), currentUsername=$("current-username"), currentEmail=$("current-email"), currentMinecraft=$("current-minecraft"), currentRole=$("current-role"), toastContainer=document.querySelector(".toast-container"), whitelistForm=$("whitelist-form"), whitelistMessage=$("whitelist-message"), myApplications=$("my-applications"), adminApplications=$("admin-applications"), chatBox=$("chat-box"), chatForm=$("chat-form"), chatInput=$("chat-input"), chatMessage=$("chat-message"), pendingCount=$("pending-count"), approvedCount=$("approved-count"), rejectedCount=$("rejected-count");
-let authMode="login", currentUser=null, adminFilter="all", chatChannel=null;
-function escapeHTML(value){return String(value??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[c]))}
-function safeStatus(status){return ["pending","approved","rejected"].includes(status)?status:"pending"}
-function showToast(title,message,type="success"){if(!toastContainer)return;const toast=document.createElement("div");toast.className=`toast ${type==="error"?"error":""}`;toast.innerHTML=`<strong>${escapeHTML(title)}</strong><span>${escapeHTML(message)}</span>`;toastContainer.appendChild(toast);setTimeout(()=>{toast.style.opacity="0";toast.style.transform="translateY(8px)";setTimeout(()=>toast.remove(),220)},3600)}
-function setAuthMode(mode){authMode=mode;const signup=mode==="signup";loginTab?.classList.toggle("active",!signup);signupTab?.classList.toggle("active",signup);usernameInput?.classList.toggle("hidden",!signup);if(usernameInput)usernameInput.required=signup;if(authSubmit)authSubmit.textContent=signup?"СТВОРИТИ АКАУНТ":"УВІЙТИ";if(authMessage)authMessage.textContent=""}
-loginTab?.addEventListener("click",()=>setAuthMode("login")); signupTab?.addEventListener("click",()=>setAuthMode("signup"));
-async function handleAuth(event){event.preventDefault();if(!supabaseClient){if(authMessage)authMessage.textContent="Не вдалося підключити систему авторизації.";return}if(authMessage)authMessage.textContent="Обробка...";try{if(authMode==="signup"){const{data,error}=await supabaseClient.auth.signUp({email:emailInput.value.trim(),password:passwordInput.value,options:{data:{username:usernameInput.value.trim()}}});if(error)throw error;if(authMessage)authMessage.textContent=data.session?"Акаунт створено.":"Акаунт створено. Перевір пошту для підтвердження.";showToast("Готово",data.session?"Акаунт успішно створено.":"Перевір email для підтвердження.")}else{const{error}=await supabaseClient.auth.signInWithPassword({email:emailInput.value.trim(),password:passwordInput.value});if(error)throw error;if(authMessage)authMessage.textContent="Вхід виконано.";showToast("Вітаємо","Ти успішно увійшов у кабінет.")}}catch(error){if(authMessage)authMessage.textContent=error?.message||"Сталася помилка.";showToast("Помилка",error?.message||"Сталася помилка.","error")}}
-authForm?.addEventListener("submit",handleAuth);
-$("logout-btn")?.addEventListener("click",async()=>{if(!supabaseClient)return;const{error}=await supabaseClient.auth.signOut();if(error)showToast("Помилка",error.message,"error");else showToast("Вихід","Ти вийшов з акаунта.")});
-async function loadProfile(user){if(!supabaseClient)return null;const{data,error}=await supabaseClient.from("profiles").select("id, username, minecraft_nickname, role").eq("id",user.id).single();if(error||!data){console.error(error);return null}if(currentUsername)currentUsername.textContent=data.username||"—";if(currentEmail)currentEmail.textContent=user.email||"—";if(currentMinecraft)currentMinecraft.textContent=data.minecraft_nickname||"Не вказано";if(currentRole)currentRole.textContent=data.role==="admin"?"ADMIN":"USER";if(adminPanel)adminPanel.classList.toggle("hidden",data.role!=="admin");return data}
-async function loadMyApplications(){if(!supabaseClient||!myApplications)return;const{data,error}=await supabaseClient.from("whitelist_applications").select("id, minecraft_nickname, reason, status, created_at, reviewed_at").order("created_at",{ascending:false});if(error){myApplications.innerHTML='<div class="empty-state">Не вдалося завантажити заявки.</div>';return}if(!data?.length){myApplications.innerHTML='<div class="empty-state">Заявок ще немає.</div>';return}myApplications.innerHTML=data.map(app=>`<div class="application"><strong>${escapeHTML(app.minecraft_nickname)}</strong><span class="status-pill ${safeStatus(app.status)}">${escapeHTML(app.status)}</span><p>${escapeHTML(app.reason)}</p></div>`).join("")}
-whitelistForm?.addEventListener("submit",async event=>{event.preventDefault();if(!currentUser||!supabaseClient)return;if(whitelistMessage)whitelistMessage.textContent="Надсилання...";const nickname=$("minecraft-nickname")?.value.trim()||"",reason=$("whitelist-reason")?.value.trim()||"";const{error}=await supabaseClient.from("whitelist_applications").insert({user_id:currentUser.id,minecraft_nickname:nickname,reason});if(error){if(whitelistMessage)whitelistMessage.textContent=error.message;showToast("Не вдалося надіслати",error.message,"error")}else{if(whitelistMessage)whitelistMessage.textContent="Заявку надіслано адміністратору.";showToast("Заявку надіслано","Адміністратор перегляне її та змінить статус.");whitelistForm.reset();await loadMyApplications()}});
-async function loadAdminApplications(){if(!supabaseClient||!adminApplications)return;const{data,error}=await supabaseClient.from("whitelist_applications").select("id, user_id, minecraft_nickname, reason, status, created_at, profiles!whitelist_applications_user_id_fkey(username)").order("created_at",{ascending:false});if(error){console.error("Admin applications:",error);adminApplications.innerHTML='<div class="empty-state">Не вдалося завантажити заявки.</div>';return}const counts=(data||[]).reduce((acc,app)=>{const s=safeStatus(app.status);acc[s]=(acc[s]||0)+1;return acc},{pending:0,approved:0,rejected:0});if(pendingCount)pendingCount.textContent=counts.pending;if(approvedCount)approvedCount.textContent=counts.approved;if(rejectedCount)rejectedCount.textContent=counts.rejected;if(!data?.length){adminApplications.innerHTML='<div class="empty-state">Заявок ще немає.</div>';return}adminApplications.innerHTML=data.map(app=>{const status=safeStatus(app.status),pending=status==="pending";const hidden=adminFilter!=="all"&&adminFilter!==status;return `<div class="application" data-status="${status}" data-status-hidden="${hidden}"><div class="application-head"><div><strong>${escapeHTML(app.minecraft_nickname)}</strong> — ${escapeHTML(app.profiles?.username||"гравець")}</div><span class="application-date">${escapeHTML(new Date(app.created_at).toLocaleString("uk-UA"))}</span></div><div style="margin-top:8px"><span class="status-pill ${status}">${escapeHTML(status)}</span></div><p>${escapeHTML(app.reason)}</p><div class="application-actions"><button class="success-button" data-review="approved" data-id="${escapeHTML(app.id)}" ${pending?"":"disabled"}>ПРИЙНЯТИ</button><button class="danger-button" data-review="rejected" data-id="${escapeHTML(app.id)}" ${pending?"":"disabled"}>ВІДХИЛИТИ</button></div></div>`}).join("")}
-document.querySelectorAll(".filter-button").forEach(button=>button.addEventListener("click",()=>{adminFilter=button.dataset.filter||"all";document.querySelectorAll(".filter-button").forEach(b=>b.classList.toggle("active",b===button));adminApplications?.querySelectorAll(".application[data-status]").forEach(card=>{card.dataset.statusHidden=adminFilter!=="all"&&adminFilter!==card.dataset.status?"true":"false"})}));
-adminApplications?.addEventListener("click",async event=>{const button=event.target.closest("button[data-review]");if(!button||button.disabled||!currentUser||!supabaseClient)return;const status=button.dataset.review;if(!["approved","rejected"].includes(status))return;button.disabled=true;button.textContent=status==="approved"?"ПРИЙНЯТТЯ...":"ВІДХИЛЕННЯ...";const{error}=await supabaseClient.from("whitelist_applications").update({status,reviewed_by:currentUser.id,reviewed_at:new Date().toISOString()}).eq("id",button.dataset.id).eq("status","pending");if(error){showToast("Помилка",error.message,"error");await loadAdminApplications();return}showToast(status==="approved"?"Заявку прийнято":"Заявку відхилено","Статус заявки оновлено.");await loadAdminApplications();await loadMyApplications()});
-function renderChat(messages){if(!chatBox)return;chatBox.innerHTML=messages.map(m=>`<div class="chat-message"><div class="meta"><span class="name">${escapeHTML(m.profiles?.username||"гравець")}</span> · ${escapeHTML(new Date(m.created_at).toLocaleString("uk-UA"))}</div><div class="text">${escapeHTML(m.message)}</div></div>`).join("");chatBox.scrollTop=chatBox.scrollHeight}
-async function loadChat(){if(!supabaseClient||!chatBox)return;const{data,error}=await supabaseClient.from("chat_messages").select("id, user_id, message, created_at, profiles(username)").order("created_at",{ascending:true}).limit(100);if(!error)renderChat(data||[]);else console.error("Chat:",error)}
-chatForm?.addEventListener("submit",async event=>{event.preventDefault();if(!currentUser||!supabaseClient||!chatInput)return;const message=chatInput.value.trim();if(!message)return;if(chatMessage)chatMessage.textContent="";const{error}=await supabaseClient.from("chat_messages").insert({user_id:currentUser.id,message});if(error){if(chatMessage)chatMessage.textContent=error.message;showToast("Чат",error.message,"error")}else chatInput.value=""});
-function subscribeToChat(){if(!supabaseClient||!chatBox||chatChannel)return;chatChannel=supabaseClient.channel("vintage-chat").on("postgres_changes",{event:"INSERT",schema:"public",table:"chat_messages"},loadChat).subscribe()}
-async function updateAuthUI(session){currentUser=session?.user||null;if(authPanel)authPanel.classList.toggle("hidden",!!currentUser);if(userPanel)userPanel.classList.toggle("hidden",!currentUser);if(!currentUser){if(adminPanel)adminPanel.classList.add("hidden");return}const profile=await loadProfile(currentUser);await loadMyApplications();await loadChat();if(profile?.role==="admin")await loadAdminApplications()}
-if(supabaseClient){supabaseClient.auth.onAuthStateChange((_event,session)=>{void updateAuthUI(session)});(async()=>{const{data:{session}}=await supabaseClient.auth.getSession();await updateAuthUI(session);if(session&&chatBox)subscribeToChat()})()}
+// ---------- Profile page ----------
+async function setupProfilePage(){
+  const page=$("profile-page");if(!page)return;
+  const user=await refreshAuth();
+  const guest=$("profile-guest"), content=$("profile-content");
+  if(!user){guest?.classList.remove("hidden");content?.classList.add("hidden");return;}
+  guest?.classList.add("hidden");content?.classList.remove("hidden");
+  $("profile-username").textContent=currentProfile?.username||"—"; $("profile-email").textContent=user.email||"—"; $("profile-minecraft").textContent=currentProfile?.minecraft_nickname||"Не вказано"; $("profile-minecraft-input").value=currentProfile?.minecraft_nickname||""; $("profile-role").textContent=currentProfile?.role==="admin"?"ADMIN":"USER";
+  $("profile-minecraft-form")?.addEventListener("submit",async e=>{e.preventDefault();const v=$("profile-minecraft-input").value.trim();const {error}=await supabaseClient.from("profiles").update({minecraft_nickname:v||null}).eq("id",user.id);if(error)showToast("Профіль",error.message,"error");else{currentProfile.minecraft_nickname=v;$("profile-minecraft").textContent=v||"Не вказано";showToast("Профіль","Minecraft-нік збережено.");}});
+  $("logout-btn")?.addEventListener("click",async()=>{await supabaseClient.auth.signOut();location.href="account.html";});
+}
 
-document.querySelectorAll("a,button,input,textarea").forEach(el=>{el.addEventListener("mouseenter",()=>{if(glow){glow.style.width="180px";glow.style.height="180px"}});el.addEventListener("mouseleave",()=>{if(glow){glow.style.width="120px";glow.style.height="120px"}})});
+// ---------- Whitelist page ----------
+async function setupWhitelistPage(){
+  const page=$("whitelist-page");if(!page)return;const user=await refreshAuth();if(!user){$("whitelist-guest")?.classList.remove("hidden");return;} $("whitelist-content")?.classList.remove("hidden");
+  const form=$("whitelist-form"), msg=$("whitelist-message"), list=$("my-applications");
+  async function load(){const {data,error}=await supabaseClient.from("whitelist_applications").select("id,minecraft_nickname,reason,status,created_at,reviewed_at").eq("user_id",user.id).order("created_at",{ascending:false});if(error){list.innerHTML=`<div class="empty-state">${escapeHTML(error.message)}</div>`;return;}list.innerHTML=data?.length?data.map(a=>`<article class="application"><div class="application-head"><strong>${escapeHTML(a.minecraft_nickname)}</strong><span class="status-pill ${escapeHTML(a.status)}">${escapeHTML(a.status)}</span></div><p>${escapeHTML(a.reason)}</p><small>${fmtDate(a.created_at)}</small></article>`).join(""):`<div class="empty-state">Заявок ще немає.</div>`;}
+  form?.addEventListener("submit",async e=>{e.preventDefault();const nickname=$("minecraft-nickname").value.trim(),reason=$("whitelist-reason").value.trim();msg.textContent="Надсилання...";const {error}=await supabaseClient.from("whitelist_applications").insert({user_id:user.id,minecraft_nickname:nickname,reason});if(error){msg.textContent=error.message;showToast("Whitelist",error.message,"error")}else{msg.textContent="Заявку надіслано.";form.reset();await load();showToast("Готово","Заявку передано адміністратору.")}});await load();
+}
+
+// ---------- Chat page ----------
+const emojiList=["😀","😎","😂","😍","🤔","😅","🔥","❤️","👍","👎","🎉","⛏️","⚙️","🏭","🌲","💎","☕","👀"];
+function emojiPicker(){const box=$("emoji-picker");if(!box)return;box.innerHTML=emojiList.map(e=>`<button type="button" class="emoji-btn" data-emoji="${e}">${e}</button>`).join("");box.classList.toggle("hidden");}
+async function chatModerationState(userId){
+  const {data,error}=await supabaseClient.from("user_moderation").select("type,expires_at,reason,active").eq("user_id",userId).eq("active",true);if(error)return {mute:null,ban:null};
+  const now=Date.now();const active=(data||[]).filter(x=>!x.expires_at||new Date(x.expires_at).getTime()>now);return {mute:active.find(x=>x.type==="mute")||null,ban:active.find(x=>x.type==="ban")||null};
+}
+async function setupChatPage(){
+  const page=$("chat-page");if(!page)return;const user=await refreshAuth();if(!user){$("chat-guest")?.classList.remove("hidden");return;} $("chat-content")?.classList.remove("hidden");
+  const box=$("chat-box"),form=$("chat-form"),input=$("chat-input"),msg=$("chat-message");
+  async function load(){const {data,error}=await supabaseClient.from("chat_messages").select("id,user_id,message,created_at,highlighted,profiles(username,role)").order("created_at",{ascending:true}).limit(150);if(error){box.innerHTML=`<div class="empty-state">${escapeHTML(error.message)}</div>`;return;}box.innerHTML=(data||[]).map(m=>`<article class="chat-message ${m.user_id===user.id?"mine":""} ${m.highlighted?"highlighted":""}" data-id="${m.id}"><div class="chat-head"><span class="name">${escapeHTML(m.profiles?.username||"гравець")}</span>${m.profiles?.role==="admin"?'<span class="role-label">ADMIN</span>':''}<time>${fmtDate(m.created_at)}</time></div><div class="text">${escapeHTML(m.message).replace(/\n/g,"<br>")}</div>${m.user_id===user.id?`<button class="highlight-toggle" type="button" data-highlight="${m.highlighted}">${m.highlighted?"★ Прибрати виділення":"☆ Виділити"}</button>`:""}</article>`).join("");box.scrollTop=box.scrollHeight;}
+  $("emoji-toggle")?.addEventListener("click",emojiPicker);$("emoji-picker")?.addEventListener("click",e=>{const b=e.target.closest("[data-emoji]");if(b){input.value+=b.dataset.emoji;input.focus();$("emoji-picker").classList.add("hidden")}});
+  box.addEventListener("click",async e=>{const b=e.target.closest(".highlight-toggle");if(!b)return;const id=b.closest(".chat-message").dataset.id;const next=b.dataset.highlight!=="true";const {error}=await supabaseClient.from("chat_messages").update({highlighted:next}).eq("id",id).eq("user_id",user.id);if(error)showToast("Чат",error.message,"error");else load();});
+  form.addEventListener("submit",async e=>{e.preventDefault();const text=input.value.trim();if(!text)return;const mod=await chatModerationState(user.id);if(mod.ban){msg.textContent=`У тебе бан до ${fmtDate(mod.ban.expires_at)}${mod.ban.reason?` — ${mod.ban.reason}`:""}.`;return;}if(mod.mute){msg.textContent=`Ти зам'ючений до ${fmtDate(mod.mute.expires_at)}${mod.mute.reason?` — ${mod.mute.reason}`:""}.`;return;}msg.textContent="";const {error}=await supabaseClient.from("chat_messages").insert({user_id:user.id,message:text});if(error){msg.textContent=error.message;showToast("Чат",error.message,"error")}else{input.value="";await load();}});
+  await load();chatChannel=supabaseClient.channel("vintage-chat-page").on("postgres_changes",{event:"*",schema:"public",table:"chat_messages"},load).subscribe();
+}
+
+// ---------- Admin ----------
+async function setupAdminPage(){
+  const page=$("admin-page");if(!page)return;const user=await refreshAuth();if(!user||currentProfile?.role!=="admin"){$("admin-denied")?.classList.remove("hidden");return;}$("admin-content")?.classList.remove("hidden");
+  let applications=[]; let users=[];
+  const loadUsers=async()=>{const {data,error}=await supabaseClient.rpc("admin_list_users");if(error){$("admin-users").innerHTML=`<div class="empty-state">${escapeHTML(error.message)}<br>Потрібна SQL-міграція v17.</div>`;return;}users=data||[];renderUsers();};
+  const loadApps=async()=>{const {data,error}=await supabaseClient.from("whitelist_applications").select("id,user_id,minecraft_nickname,reason,status,created_at,profiles(username)").order("created_at",{ascending:false});if(error){$("admin-applications").innerHTML=`<div class="empty-state">${escapeHTML(error.message)}</div>`;return;}applications=data||[];renderApps();};
+  function renderUsers(){const q=($("user-search")?.value||"").toLowerCase();const arr=users.filter(u=>[u.username,u.email,u.minecraft_nickname].some(x=>String(x||"").toLowerCase().includes(q)));$("admin-user-count").textContent=users.length;$("admin-users").innerHTML=arr.map(u=>{const muted=u.mute_until&&new Date(u.mute_until)>new Date(),banned=u.ban_until&&new Date(u.ban_until)>new Date();return `<article class="admin-user"><div><strong>${escapeHTML(u.username||"Без ніку")}</strong><span class="muted-line">${escapeHTML(u.email||"")} · MC: ${escapeHTML(u.minecraft_nickname||"—")}</span><span class="muted-line">Реєстрація: ${fmtDate(u.created_at)}</span></div><div class="moderation-badges">${muted?`<span class="status-pill warning">MUTE до ${fmtDate(u.mute_until)}</span>`:""}${banned?`<span class="status-pill rejected">BAN до ${fmtDate(u.ban_until)}</span>`:""}</div><div class="admin-actions"><button class="small-button" data-mod="mute" data-id="${u.id}">МУТ</button><button class="small-button danger-button" data-mod="ban" data-id="${u.id}">БАН</button>${muted?`<button class="small-button" data-clear="mute" data-id="${u.id}">ЗНЯТИ МУТ</button>`:""}${banned?`<button class="small-button" data-clear="ban" data-id="${u.id}">ЗНЯТИ БАН</button>`:""}</div></article>`}).join("")||`<div class="empty-state">Користувачів не знайдено.</div>`;}
+  function renderApps(){const f=$("app-filter")?.value||"all";const arr=applications.filter(a=>f==="all"||a.status===f);$("admin-applications").innerHTML=arr.map(a=>`<article class="application"><div class="application-head"><div><strong>${escapeHTML(a.minecraft_nickname)}</strong> — ${escapeHTML(a.profiles?.username||"гравець")}</div><span class="status-pill ${a.status}">${escapeHTML(a.status)}</span></div><small>${fmtDate(a.created_at)}</small><p>${escapeHTML(a.reason)}</p><div class="application-actions"><button class="success-button" data-review="approved" data-id="${a.id}" ${a.status!=="pending"?"disabled":""}>ПРИЙНЯТИ</button><button class="danger-button" data-review="rejected" data-id="${a.id}" ${a.status!=="pending"?"disabled":""}>ВІДХИЛИТИ</button></div></article>`).join("")||`<div class="empty-state">Немає заявок.</div>`;}
+  $("user-search")?.addEventListener("input",renderUsers);$("app-filter")?.addEventListener("change",renderApps);
+  const moderationModal=$("moderation-modal"); const moderationType=$("moderation-type"); const moderationUser=$("moderation-user"); const moderationDuration=$("moderation-duration"); const moderationReason=$("moderation-reason");
+  const closeModeration=()=>moderationModal?.classList.add("hidden"); $("moderation-cancel")?.addEventListener("click",closeModeration); moderationModal?.addEventListener("click",e=>{if(e.target===moderationModal)closeModeration();});
+  $("moderation-confirm")?.addEventListener("click",async()=>{const id=moderationUser?.value,type=moderationType?.value,minutes=Number(moderationDuration?.value||0),reason=moderationReason?.value.trim()||null;if(!id)return;const {error}=await supabaseClient.rpc("admin_set_moderation",{target_user:id,moderation_type:type,duration_minutes:minutes,moderation_reason:reason});if(error)showToast("Модерація",error.message,"error");else{showToast(type==="mute"?"Мут видано":"Бан видано",minutes===0?"Назавжди":"Обмеження застосовано.");closeModeration();loadUsers();}});
+  $("admin-users")?.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;const id=b.dataset.id;if(b.dataset.clear){const {error}=await supabaseClient.rpc("admin_clear_moderation",{target_user:id,moderation_type:b.dataset.clear});if(error)showToast("Модерація",error.message,"error");else{showToast("Готово","Обмеження знято.");loadUsers();}return;}if(b.dataset.mod){if(moderationModal){moderationUser.value=id;moderationType.value=b.dataset.mod;moderationReason.value="";moderationDuration.value="60";$("moderation-title").textContent=b.dataset.mod==="mute"?"Видати мут":"Забанити користувача";moderationModal.classList.remove("hidden");}}});
+  $("admin-applications")?.addEventListener("click",async e=>{const b=e.target.closest("button[data-review]");if(!b||b.disabled)return;const {error}=await supabaseClient.from("whitelist_applications").update({status:b.dataset.review,reviewed_by:user.id,reviewed_at:new Date().toISOString()}).eq("id",b.dataset.id).eq("status","pending");if(error)showToast("Заявки",error.message,"error");else{showToast("Заявку оновлено","Статус змінено.");loadApps();}});
+  qsa(".admin-tab").forEach(tab=>tab.addEventListener("click",()=>{qsa(".admin-tab").forEach(x=>x.classList.remove("active"));qsa(".admin-section").forEach(x=>x.classList.remove("active"));tab.classList.add("active");$(tab.dataset.target)?.classList.add("active");}));
+  await Promise.all([loadUsers(),loadApps()]);
+}
+
+// ---------- Guide ----------
+function setupGuide(){qsa(".era").forEach(b=>b.addEventListener("click",()=>{qsa(".era,.guide-section").forEach(x=>x.classList.remove("active"));b.classList.add("active");qs(`[data-panel="${b.dataset.era}"]`)?.classList.add("active");}));}
+
+(async()=>{await refreshAuth();setupAuthPage();await setupProfilePage();await setupWhitelistPage();await setupChatPage();await setupAdminPage();setupGuide();})();
