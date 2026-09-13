@@ -1,18 +1,15 @@
-VINTAGE — Minecraft server website
+VINTAGE — v11 redesign
 
-Pack: TerraFirmaGreg: Modern
-Minecraft: 1.20.1 / Forge
-CurseForge: https://www.curseforge.com/minecraft/modpacks/terrafirmagreg-modern
+Базова функціональність v11 збережена: Supabase Auth, whitelist, статуси заявок, admin-панель, чат, гайд, інтерактивний фон.
 
-Included:
-- VINTAGE branding
-- Interactive living-world background with parallax, fog, light sweep, particles and ambient dust
-- Pixel-inspired custom cursor
-- Supabase Auth, whitelist applications, chat and admin panel
-
-Supabase frontend uses the publishable key only. Never put a secret/service-role key in the browser.
-
-Replace play.example.com in script.js with the real Minecraft server IP.
-
-
-V8: Кабінет винесено на окрему сторінку account.html.
+Зміни:
+- новий premium Minecraft UI у стилі наданого макета;
+- favicon з логотипом VINTAGE для вкладки браузера;
+- адаптивне мобільне меню;
+- виправлено падіння JS на index/guide через відсутні auth-елементи;
+- виправлено можливий crash при відсутніх DOM-елементах;
+- realtime чат запускається лише там, де потрібен;
+- прибрано дублювання ambient-dust;
+- додано безпечніше відображення даних з БД через escapeHTML;
+- повага до prefers-reduced-motion;
+- серверний IP та онлайн залишені порожніми, як у v11.
