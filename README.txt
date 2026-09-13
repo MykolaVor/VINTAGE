@@ -29,3 +29,7 @@ IMPORTANT:
 Run SUPABASE_MIGRATION_V17.sql once in Supabase SQL Editor before using moderation/highlight features.
 The migration creates user_moderation, chat message highlights, server-side moderation checks, and admin RPCs.
 No passwords are stored in the public profiles table; authentication remains in Supabase Auth.
+
+
+V18 patch: fixed Supabase relation ambiguity for whitelist_applications (two profiles foreign keys), and added own-message edit/delete plus admin delete.
+SQL: run SUPABASE_MIGRATION_V18.sql once after V17.
