@@ -33,3 +33,10 @@ No passwords are stored in the public profiles table; authentication remains in 
 
 V18 patch: fixed Supabase relation ambiguity for whitelist_applications (two profiles foreign keys), and added own-message edit/delete plus admin delete.
 SQL: run SUPABASE_MIGRATION_V18.sql once after V17.
+
+
+V20 SERVER STATUS
+- Server IP configured: 134.255.209.65:10030
+- Home page shows live Java Minecraft status using the MCSRVSTATUS API.
+- Player count is shown as online/max when the API returns it.
+- API responses are cached by the provider for about 5 minutes.

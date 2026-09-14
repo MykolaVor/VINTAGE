@@ -1,6 +1,7 @@
 const SUPABASE_URL = "https://mqavqelpvjfreagcxemp.supabase.co";
 const SUPABASE_KEY = "sb_publishable_eXRi9dicKYjn3EpVJmgwNw_yo38UK-0";
-const SERVER_IP = "";
+const SERVER_IP = "134.255.209.65:10030";
+const SERVER_STATUS_API = `https://api.mcsrvstat.us/3/${encodeURIComponent(SERVER_IP)}`;
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY) || null;
 
 const $ = (id) => document.getElementById(id);
@@ -75,9 +76,35 @@ qsa("#site-nav a").forEach(a=>a.addEventListener("click",()=>$("site-nav")?.clas
 // ---------- Home ----------
 function copyIP(){
   if(!SERVER_IP){showToast("IP сервера","IP буде додано після запуску сервера.");return;}
-  navigator.clipboard?.writeText(SERVER_IP).then(()=>showToast("Скопійовано","IP сервера скопійовано."));
+  const done=()=>showToast("Скопійовано",`${SERVER_IP} скопійовано.`);
+  if(navigator.clipboard?.writeText) navigator.clipboard.writeText(SERVER_IP).then(done).catch(()=>fallbackCopyIP(done));
+  else fallbackCopyIP(done);
+}
+function fallbackCopyIP(done){
+  const ta=document.createElement("textarea");ta.value=SERVER_IP;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();try{document.execCommand("copy");done();}catch{}ta.remove();
 }
 window.copyIP=copyIP;
+
+// ---------- Minecraft server status ----------
+async function loadServerStatus(){
+  const ip=$(`server-ip`), count=$(`player-count`), status=$(`server-status-text`), dot=qs(`.server-status .status-dot`);
+  if(ip) ip.textContent=SERVER_IP;
+  const setState=(online,players=0,max=20)=>{
+    if(status) status.textContent=online?"Сервер онлайн":"Сервер офлайн";
+    if(count) count.textContent=online?`${players}/${max||20}`:"—";
+    if(dot){dot.classList.toggle("status-dot-muted",!online);dot.classList.toggle("status-dot-online",online);}
+  };
+  try{
+    const res=await fetch(SERVER_STATUS_API,{cache:"no-store"});
+    if(!res.ok) throw new Error("status request failed");
+    const data=await res.json();
+    setState(Boolean(data.online),Number(data.players?.online||0),Number(data.players?.max||20));
+  }catch(e){
+    setState(false);
+  }
+}
+window.loadServerStatus=loadServerStatus;
+
 
 // ---------- Auth page ----------
 let authMode="login";
@@ -165,4 +192,4 @@ async function setupAdminPage(){
 // ---------- Guide ----------
 function setupGuide(){qsa(".era").forEach(b=>b.addEventListener("click",()=>{qsa(".era,.guide-section").forEach(x=>x.classList.remove("active"));b.classList.add("active");qs(`[data-panel="${b.dataset.era}"]`)?.classList.add("active");}));}
 
-(async()=>{await refreshAuth();setupAuthPage();await setupProfilePage();await setupWhitelistPage();await setupChatPage();await setupAdminPage();setupGuide();})();
+(async()=>{await refreshAuth();loadServerStatus();setupAuthPage();await setupProfilePage();await setupWhitelistPage();await setupChatPage();await setupAdminPage();setupGuide();})();

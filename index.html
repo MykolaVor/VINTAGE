@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VINTAGE — Minecraft Server</title>
-    <link rel="stylesheet" href="style.css?v=18">
+    <link rel="stylesheet" href="style.css?v=20">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -57,14 +57,14 @@
             </p>
 
             <div class="buttons">
-                <button class="play-button" type="button" onclick="copyIP()">IP: 134.255.209.65:10030</button>
+                <button class="play-button" type="button" onclick="copyIP()">СКОПІЮВАТИ IP</button>
                 <a href="#how-to-play" class="secondary-button">ЯК ГРАТИ</a>
             </div>
 
             <div class="server-status">
                 <span class="status-dot status-dot-muted"></span>
                 <div>
-                    <strong>Сервер готується</strong>
+                    <strong id="server-status-text">Перевірка сервера…</strong>
                     <small id="server-ip">134.255.209.65:10030</small>
                 </div>
                 <div class="players">
@@ -157,6 +157,6 @@
         <p>© 2026 VINTAGE Server</p>
     </footer>
 
-    <script src="script.js?v=18"></script>
+    <script src="script.js?v=20"></script>
 </body>
 </html>

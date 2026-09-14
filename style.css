@@ -753,3 +753,16 @@ a, button, input, textarea { cursor:url("assets/cursor-vintage.svg") 4 3, pointe
 
 /* v18 chat actions */
 .chat-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.chat-actions button{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);color:#aeb6b3;padding:6px 10px;border-radius:6px;cursor:pointer;font:inherit;font-size:11px}.chat-actions button:hover{background:rgba(255,210,105,.12);color:#ffd269}.chat-actions .danger-button{color:#e6a4a4}.chat-actions .danger-button:hover{color:#fff;background:rgba(190,65,65,.2)}
+
+
+/* Live Minecraft server status */
+.status-dot-online {
+    background: #61d65a !important;
+    box-shadow: 0 0 12px #61d65a !important;
+}
+.server-status strong {
+    transition: color .2s ease;
+}
+#server-status-text {
+    letter-spacing: .02em;
+}
