@@ -114,12 +114,46 @@ function setupAuthPage(){
   const loginTab=$("login-tab"), signupTab=$("signup-tab"), username=$("username"), email=$("email"), password=$("password"), submit=$("auth-submit"), msg=$("auth-message");
   const setMode=(m)=>{authMode=m;const s=m==="signup";loginTab?.classList.toggle("active",!s);signupTab?.classList.toggle("active",s);if(username){username.classList.toggle("hidden",!s);username.required=s;}if(password)password.autocomplete=s?"new-password":"current-password";if(submit)submit.textContent=s?"СТВОРИТИ АКАУНТ":"УВІЙТИ";if(msg)msg.textContent="";};
   loginTab?.addEventListener("click",()=>setMode("login")); signupTab?.addEventListener("click",()=>setMode("signup")); setMode("login");
+  $("forgot-password")?.addEventListener("click",async()=>{
+    const mail=email?.value.trim();
+    if(!mail){msg.textContent="Спочатку введи email, для якого потрібно відновити пароль.";email?.focus();return;}
+    if(!supabaseClient)return;
+    msg.textContent="Надсилаємо лист для відновлення...";
+    try{
+      const redirectTo=`${location.origin}/update-password.html`;
+      const {error}=await supabaseClient.auth.resetPasswordForEmail(mail,{redirectTo});
+      if(error)throw error;
+      msg.textContent="Лист для відновлення пароля надіслано. Перевір пошту.";
+      showToast("Перевір пошту","Посилання для відновлення пароля надіслано.");
+    }catch(err){msg.textContent=err.message||"Не вдалося надіслати лист.";showToast("Помилка",err.message||"Не вдалося надіслати лист.","error");}
+  });
   form.addEventListener("submit",async e=>{e.preventDefault();if(!supabaseClient)return;msg.textContent="Обробка...";try{
     if(authMode==="signup"){
       const {data,error}=await supabaseClient.auth.signUp({email:email.value.trim(),password:password.value,options:{data:{username:username.value.trim()}}});if(error)throw error;
       msg.textContent=data.session?"Акаунт створено.":"Акаунт створено. Перевір email, якщо потрібне підтвердження."; if(data.session)location.href="profile.html";
     }else{const {error}=await supabaseClient.auth.signInWithPassword({email:email.value.trim(),password:password.value});if(error)throw error;location.href="profile.html";}
   }catch(err){msg.textContent=err.message||"Сталася помилка.";showToast("Помилка",err.message||"Сталася помилка.","error");}});
+}
+
+// ---------- Password recovery ----------
+function setupPasswordUpdatePage(){
+  const form=$("password-update-form"); if(!form)return;
+  const password=$("new-password"), confirm=$("confirm-password"), msg=$("password-update-message");
+  supabaseClient?.auth.onAuthStateChange((event)=>{
+    if(event==="PASSWORD_RECOVERY") msg.textContent="Введи новий пароль.";
+  });
+  form.addEventListener("submit",async e=>{
+    e.preventDefault();
+    if(!supabaseClient)return;
+    if(password.value.length<6){msg.textContent="Пароль має містити щонайменше 6 символів.";return;}
+    if(password.value!==confirm.value){msg.textContent="Паролі не збігаються.";return;}
+    msg.textContent="Зберігаємо новий пароль...";
+    const {error}=await supabaseClient.auth.updateUser({password:password.value});
+    if(error){msg.textContent=error.message||"Не вдалося змінити пароль.";showToast("Помилка",error.message||"Не вдалося змінити пароль.","error");return;}
+    msg.textContent="Пароль успішно змінено. Перенаправляємо до профілю...";
+    showToast("Готово","Пароль змінено.");
+    setTimeout(()=>location.href="profile.html",900);
+  });
 }
 
 // ---------- Profile page ----------
@@ -192,4 +226,4 @@ async function setupAdminPage(){
 // ---------- Guide ----------
 function setupGuide(){qsa(".era").forEach(b=>b.addEventListener("click",()=>{qsa(".era,.guide-section").forEach(x=>x.classList.remove("active"));b.classList.add("active");qs(`[data-panel="${b.dataset.era}"]`)?.classList.add("active");}));}
 
-(async()=>{await refreshAuth();loadServerStatus();setupAuthPage();await setupProfilePage();await setupWhitelistPage();await setupChatPage();await setupAdminPage();setupGuide();})();
+(async()=>{await refreshAuth();loadServerStatus();setupAuthPage();setupPasswordUpdatePage();await setupProfilePage();await setupWhitelistPage();await setupChatPage();await setupAdminPage();setupGuide();})();

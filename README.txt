@@ -40,3 +40,6 @@ V20 SERVER STATUS
 - Home page shows live Java Minecraft status using the MCSRVSTATUS API.
 - Player count is shown as online/max when the API returns it.
 - API responses are cached by the provider for about 5 minutes.
+
+
+V21: додано відновлення пароля через Supabase Auth. У Supabase Authentication → URL Configuration додайте https://vintage.mcvintage.workers.dev/update-password.html у Redirect URLs.

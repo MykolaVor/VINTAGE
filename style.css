@@ -766,3 +766,6 @@ a, button, input, textarea { cursor:url("assets/cursor-vintage.svg") 4 3, pointe
 #server-status-text {
     letter-spacing: .02em;
 }
+
+.text-link-button{border:0!important;background:transparent!important;color:#c9b16d!important;padding:4px!important;text-decoration:underline;cursor:pointer;font:inherit;font-size:12px}.text-link-button:hover{color:#ffd269!important}
+.recovery-note{color:#777;font-size:12px;line-height:1.5}
