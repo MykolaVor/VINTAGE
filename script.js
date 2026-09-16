@@ -202,22 +202,130 @@ async function setupChatPage(){
   await load();chatChannel=supabaseClient.channel("vintage-chat-page").on("postgres_changes",{event:"*",schema:"public",table:"chat_messages"},load).subscribe();
 }
 
-// ---------- Admin ----------
+// ---------- Admin / Player profiles ----------
 async function setupAdminPage(){
-  const page=$("admin-page");if(!page)return;const user=await refreshAuth();if(!user||currentProfile?.role!=="admin"){$("admin-denied")?.classList.remove("hidden");return;}$("admin-content")?.classList.remove("hidden");
-  let applications=[]; let users=[];
-  const loadUsers=async()=>{const {data,error}=await supabaseClient.rpc("admin_list_users");if(error){$("admin-users").innerHTML=`<div class="empty-state">${escapeHTML(error.message)}<br>Потрібна SQL-міграція v17.</div>`;return;}users=data||[];renderUsers();};
-  const loadApps=async(notify=false)=>{const previousPending=applications.filter(a=>a.status==="pending").map(a=>a.id);const {data,error}=await supabaseClient.from("whitelist_applications").select("id,user_id,minecraft_nickname,reason,status,created_at,profiles!whitelist_applications_user_id_fkey(username)").order("created_at",{ascending:false});if(error){$("admin-applications").innerHTML=`<div class="empty-state">${escapeHTML(error.message)}</div>`;return;}applications=data||[];renderApps();const newPending=applications.filter(a=>a.status==="pending"&&!previousPending.includes(a.id));if(notify&&newPending.length){showToast("Нова заявка Whitelist",`${newPending.length===1?"Надійшла нова заявка":"Надійшли нові заявки"}.`);}setPendingBadge(applications.filter(a=>a.status==="pending").length);};
-  function setPendingBadge(count){const tab=$("admin-apps-tab");if(!tab)return;let badge=tab.querySelector(".pending-badge");if(count>0){if(!badge){badge=document.createElement("span");badge.className="pending-badge";tab.appendChild(badge);}badge.textContent=count;}else badge?.remove();}
-  function renderUsers(){const q=($("user-search")?.value||"").toLowerCase();const arr=users.filter(u=>[u.username,u.email,u.minecraft_nickname].some(x=>String(x||"").toLowerCase().includes(q)));$("admin-user-count").textContent=users.length;$("admin-users").innerHTML=arr.map(u=>{const muted=u.mute_until&&new Date(u.mute_until)>new Date(),banned=u.ban_until&&new Date(u.ban_until)>new Date();return `<article class="admin-user"><div><strong>${escapeHTML(u.username||"Без ніку")}</strong><span class="muted-line">${escapeHTML(u.email||"")} · MC: ${escapeHTML(u.minecraft_nickname||"—")}</span><span class="muted-line">Реєстрація: ${fmtDate(u.created_at)}</span></div><div class="moderation-badges">${muted?`<span class="status-pill warning">MUTE до ${fmtDate(u.mute_until)}</span>`:""}${banned?`<span class="status-pill rejected">BAN до ${fmtDate(u.ban_until)}</span>`:""}</div><div class="admin-actions"><button class="small-button" data-mod="mute" data-id="${u.id}">МУТ</button><button class="small-button danger-button" data-mod="ban" data-id="${u.id}">БАН</button>${muted?`<button class="small-button" data-clear="mute" data-id="${u.id}">ЗНЯТИ МУТ</button>`:""}${banned?`<button class="small-button" data-clear="ban" data-id="${u.id}">ЗНЯТИ БАН</button>`:""}</div></article>`}).join("")||`<div class="empty-state">Користувачів не знайдено.</div>`;}
-  function renderApps(){const f=$("app-filter")?.value||"all";const arr=applications.filter(a=>f==="all"||a.status===f);$("admin-applications").innerHTML=arr.map(a=>`<article class="application"><div class="application-head"><div><strong>${escapeHTML(a.minecraft_nickname)}</strong> — ${escapeHTML(a.profiles?.username||"гравець")}</div><span class="status-pill ${a.status}">${escapeHTML(a.status)}</span></div><small>${fmtDate(a.created_at)}</small><p>${escapeHTML(a.reason)}</p><div class="application-actions"><button class="success-button" data-review="approved" data-id="${a.id}" ${a.status!=="pending"?"disabled":""}>ПРИЙНЯТИ</button><button class="danger-button" data-review="rejected" data-id="${a.id}" ${a.status!=="pending"?"disabled":""}>ВІДХИЛИТИ</button></div></article>`).join("")||`<div class="empty-state">Немає заявок.</div>`;}
-  $("user-search")?.addEventListener("input",renderUsers);$("app-filter")?.addEventListener("change",renderApps);
-  const moderationModal=$("moderation-modal"); const moderationType=$("moderation-type"); const moderationUser=$("moderation-user"); const moderationDuration=$("moderation-duration"); const moderationReason=$("moderation-reason");
-  const closeModeration=()=>moderationModal?.classList.add("hidden"); $("moderation-cancel")?.addEventListener("click",closeModeration); moderationModal?.addEventListener("click",e=>{if(e.target===moderationModal)closeModeration();});
-  $("moderation-confirm")?.addEventListener("click",async()=>{const id=moderationUser?.value,type=moderationType?.value,minutes=Number(moderationDuration?.value||0),reason=moderationReason?.value.trim()||null;if(!id)return;const {error}=await supabaseClient.rpc("admin_set_moderation",{target_user:id,moderation_type:type,duration_minutes:minutes,moderation_reason:reason});if(error)showToast("Модерація",error.message,"error");else{showToast(type==="mute"?"Мут видано":"Бан видано",minutes===0?"Назавжди":"Обмеження застосовано.");closeModeration();loadUsers();}});
-  $("admin-users")?.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;const id=b.dataset.id;if(b.dataset.clear){const {error}=await supabaseClient.rpc("admin_clear_moderation",{target_user:id,moderation_type:b.dataset.clear});if(error)showToast("Модерація",error.message,"error");else{showToast("Готово","Обмеження знято.");loadUsers();}return;}if(b.dataset.mod){if(moderationModal){moderationUser.value=id;moderationType.value=b.dataset.mod;moderationReason.value="";moderationDuration.value="60";$("moderation-title").textContent=b.dataset.mod==="mute"?"Видати мут":"Забанити користувача";moderationModal.classList.remove("hidden");}}});
-  $("admin-applications")?.addEventListener("click",async e=>{const b=e.target.closest("button[data-review]");if(!b||b.disabled)return;const {error}=await supabaseClient.from("whitelist_applications").update({status:b.dataset.review,reviewed_by:user.id,reviewed_at:new Date().toISOString()}).eq("id",b.dataset.id).eq("status","pending");if(error)showToast("Заявки",error.message,"error");else{showToast("Заявку оновлено","Статус змінено.");loadApps();}});
+  const page=$("admin-page");
+  if(!page)return;
+  const user=await refreshAuth();
+  if(!user||currentProfile?.role!=="admin"){$("admin-denied")?.classList.remove("hidden");return;}
+  $("admin-content")?.classList.remove("hidden");
+
+  let applications=[];
+  let users=[];
+  let selectedPlayer=null;
+
+  const loadUsers=async()=>{
+    const {data,error}=await supabaseClient.rpc("admin_list_users");
+    if(error){$("admin-users").innerHTML=`<div class="empty-state">${escapeHTML(error.message)}<br>Потрібна SQL-міграція v17.</div>`;return;}
+    users=data||[];
+    renderUsers();
+  };
+
+  const loadApps=async(notify=false)=>{
+    const previousPending=applications.filter(a=>a.status==="pending").map(a=>a.id);
+    const {data,error}=await supabaseClient.from("whitelist_applications").select("id,user_id,minecraft_nickname,reason,status,created_at,reviewed_at,profiles!whitelist_applications_user_id_fkey(username)").order("created_at",{ascending:false});
+    if(error){$("admin-applications").innerHTML=`<div class="empty-state">${escapeHTML(error.message)}</div>`;return;}
+    applications=data||[];
+    renderApps();
+    const newPending=applications.filter(a=>a.status==="pending"&&!previousPending.includes(a.id));
+    if(notify&&newPending.length)showToast("Нова заявка Whitelist",`${newPending.length===1?"Надійшла нова заявка":"Надійшли нові заявки"}.`);
+    setPendingBadge(applications.filter(a=>a.status==="pending").length);
+    renderUsers();
+  };
+
+  function setPendingBadge(count){
+    const tab=$("admin-apps-tab");if(!tab)return;
+    let badge=tab.querySelector(".pending-badge");
+    if(count>0){if(!badge){badge=document.createElement("span");badge.className="pending-badge";tab.appendChild(badge);}badge.textContent=count;}
+    else badge?.remove();
+  }
+
+  function activeModeration(u,type){
+    const key=type==="mute"?"mute_until":"ban_until";
+    return u?.[key]&&new Date(u[key])>new Date();
+  }
+
+  function latestWhitelist(userId){
+    return applications.filter(a=>a.user_id===userId).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0]||null;
+  }
+
+  function avatarLetter(name){return escapeHTML((name||"Г").trim().charAt(0).toUpperCase());}
+
+  function renderUsers(){
+    const q=($("user-search")?.value||"").toLowerCase().trim();
+    const arr=users.filter(u=>[u.username,u.email,u.minecraft_nickname].some(x=>String(x||"").toLowerCase().includes(q)));
+    $("admin-user-count")&&( $("admin-user-count").textContent=arr.length );
+    $("admin-user-count-tab")&&( $("admin-user-count-tab").textContent=users.length );
+    $("admin-user-count-inline")&&( $("admin-user-count-inline").textContent=arr.length );
+    $("admin-users").innerHTML=arr.map(u=>{
+      const muted=activeModeration(u,"mute"),banned=activeModeration(u,"ban"),app=latestWhitelist(u.id);
+      const status=[];
+      if(muted)status.push(`<span class="status-pill warning">MUTE до ${fmtDate(u.mute_until)}</span>`);
+      if(banned)status.push(`<span class="status-pill rejected">BAN до ${fmtDate(u.ban_until)}</span>`);
+      if(app)status.push(`<span class="status-pill ${escapeHTML(app.status)}">WHITELIST: ${escapeHTML(app.status)}</span>`);
+      return `<article class="admin-user" data-player-id="${escapeHTML(u.id)}">
+        <div class="player-avatar">${avatarLetter(u.username)}</div>
+        <div class="player-main"><button class="player-open" type="button" data-player="${escapeHTML(u.id)}"><strong>${escapeHTML(u.username||"Без ніку")}</strong><span class="player-mc">${escapeHTML(u.minecraft_nickname||"Minecraft-нік не вказано")}</span><span class="muted-line">${escapeHTML(u.email||"")}</span><span class="muted-line">У VINTAGE з ${fmtDate(u.created_at)}</span></button></div>
+        <div class="player-status">${status.join("")||'<span class="muted-line">Статус: активний</span>'}</div>
+        <div class="admin-actions"><button class="small-button" data-player="${escapeHTML(u.id)}">ВІДКРИТИ ПРОФІЛЬ</button>${muted?`<button class="small-button" data-clear="mute" data-id="${escapeHTML(u.id)}">ЗНЯТИ МУТ</button>`:`<button class="small-button" data-mod="mute" data-id="${escapeHTML(u.id)}">МУТ</button>`}${banned?`<button class="small-button danger-button" data-clear="ban" data-id="${escapeHTML(u.id)}">ЗНЯТИ БАН</button>`:`<button class="small-button danger-button" data-mod="ban" data-id="${escapeHTML(u.id)}">БАН</button>`}</div>
+      </article>`;
+    }).join("")||`<div class="empty-state">Гравців за цим запитом не знайдено.</div>`;
+  }
+
+  function renderApps(){
+    const f=$("app-filter")?.value||"all";
+    const arr=applications.filter(a=>f==="all"||a.status===f);
+    $("admin-applications").innerHTML=arr.map(a=>`<article class="application"><div class="application-head"><div><strong>${escapeHTML(a.minecraft_nickname)}</strong> — ${escapeHTML(a.profiles?.username||"гравець")}</div><span class="status-pill ${escapeHTML(a.status)}">${escapeHTML(a.status)}</span></div><small>${fmtDate(a.created_at)}</small><p>${escapeHTML(a.reason)}</p><div class="application-actions"><button class="success-button" data-review="approved" data-id="${escapeHTML(a.id)}" ${a.status!=="pending"?"disabled":""}>ПРИЙНЯТИ</button><button class="danger-button" data-review="rejected" data-id="${escapeHTML(a.id)}" ${a.status!=="pending"?"disabled":""}>ВІДХИЛИТИ</button></div></article>`).join("")||`<div class="empty-state">Немає заявок.</div>`;
+  }
+
+  function openPlayer(id){
+    const u=users.find(x=>x.id===id);if(!u)return;
+    selectedPlayer=u;
+    const app=latestWhitelist(id), muted=activeModeration(u,"mute"), banned=activeModeration(u,"ban");
+    const body=$("player-profile-body");
+    if(!body)return;
+    body.innerHTML=`<div class="section-tag">PLAYER PROFILE</div><div class="user-badge"><div><h2>${escapeHTML(u.username||"Без ніку")}</h2><span class="role-label">${u.role==="admin"?"ADMIN":"PLAYER"}</span></div><div class="player-avatar">${avatarLetter(u.username)}</div></div><div class="player-profile-grid"><div class="player-stat"><span>Minecraft</span><strong>${escapeHTML(u.minecraft_nickname||"Не вказано")}</strong></div><div class="player-stat"><span>Email</span><strong>${escapeHTML(u.email||"—")}</strong></div><div class="player-stat"><span>Реєстрація</span><strong>${fmtDate(u.created_at)}</strong></div><div class="player-stat"><span>Модерація</span><strong>${banned?`BAN до ${fmtDate(u.ban_until)}`:muted?`MUTE до ${fmtDate(u.mute_until)}`:"Без активних обмежень"}</strong></div></div><div class="profile-whitelist"><strong>Whitelist</strong><p>${app?`${escapeHTML(app.status.toUpperCase())} · ${escapeHTML(app.minecraft_nickname)} · ${fmtDate(app.created_at)}`:"Заявок ще немає."}</p></div><div class="player-profile-actions"><button class="small-button" data-mod="mute" data-id="${escapeHTML(id)}">${muted?"ПРОДОВЖИТИ МУТ":"ВИДАТИ МУТ"}</button><button class="small-button danger-button" data-mod="ban" data-id="${escapeHTML(id)}">${banned?"ПРОДОВЖИТИ БАН":"ЗАБАНИТИ"}</button>${muted?`<button class="small-button" data-clear="mute" data-id="${escapeHTML(id)}">ЗНЯТИ МУТ</button>`:""}${banned?`<button class="small-button danger-button" data-clear="ban" data-id="${escapeHTML(id)}">ЗНЯТИ БАН</button>`:""}</div>`;
+    $("player-profile-modal")?.classList.remove("hidden");
+  }
+
+  const moderationModal=$("moderation-modal"), moderationType=$("moderation-type"), moderationUser=$("moderation-user"), moderationDuration=$("moderation-duration"), moderationReason=$("moderation-reason");
+  const closeModeration=()=>moderationModal?.classList.add("hidden");
+  const openModeration=(id,type)=>{if(!moderationModal)return;moderationUser.value=id;moderationType.value=type;moderationReason.value="";moderationDuration.value="60";$("moderation-title").textContent=type==="mute"?"Видати мут":"Забанити користувача";moderationModal.classList.remove("hidden");};
+  $("moderation-cancel")?.addEventListener("click",closeModeration);
+  moderationModal?.addEventListener("click",e=>{if(e.target===moderationModal)closeModeration();});
+  $("moderation-confirm")?.addEventListener("click",async()=>{const id=moderationUser?.value,type=moderationType?.value,minutes=Number(moderationDuration?.value||0),reason=moderationReason?.value.trim()||null;if(!id)return;const {error}=await supabaseClient.rpc("admin_set_moderation",{target_user:id,moderation_type:type,duration_minutes:minutes,moderation_reason:reason});if(error)showToast("Модерація",error.message,"error");else{showToast(type==="mute"?"Мут видано":"Бан видано",minutes===0?"Назавжди":"Обмеження застосовано.");closeModeration();await loadUsers();openPlayer(id);}});
+
+  $("user-search")?.addEventListener("input",renderUsers);
+  $("app-filter")?.addEventListener("change",renderApps);
+  $("player-profile-close")?.addEventListener("click",()=>$("player-profile-modal")?.classList.add("hidden"));
+  $("player-profile-modal")?.addEventListener("click",e=>{if(e.target===$("player-profile-modal"))$("player-profile-modal")?.classList.add("hidden");});
+
+  $("admin-users")?.addEventListener("click",async e=>{
+    const b=e.target.closest("button");if(!b)return;
+    const id=b.dataset.id||b.dataset.player;
+    if(b.dataset.clear){
+      const {error}=await supabaseClient.rpc("admin_clear_moderation",{target_user:id,moderation_type:b.dataset.clear});
+      if(error)showToast("Модерація",error.message,"error");else{showToast("Готово","Обмеження знято.");await loadUsers();}
+      return;
+    }
+    if(b.dataset.mod){openModeration(id,b.dataset.mod);return;}
+    if(b.dataset.player){openPlayer(id);return;}
+  });
+
+  $("player-profile-body")?.addEventListener("click",async e=>{
+    const b=e.target.closest("button");if(!b)return;
+    const id=b.dataset.id;
+    if(b.dataset.clear){
+      const {error}=await supabaseClient.rpc("admin_clear_moderation",{target_user:id,moderation_type:b.dataset.clear});
+      if(error)showToast("Модерація",error.message,"error");else{showToast("Готово","Обмеження знято.");await loadUsers();openPlayer(id);}
+      return;
+    }
+    if(b.dataset.mod)openModeration(id,b.dataset.mod);
+  });
+
+  $("admin-applications")?.addEventListener("click",async e=>{const b=e.target.closest("button[data-review]");if(!b||b.disabled)return;const {error}=await supabaseClient.from("whitelist_applications").update({status:b.dataset.review,reviewed_by:user.id,reviewed_at:new Date().toISOString()}).eq("id",b.dataset.id).eq("status","pending");if(error)showToast("Заявки",error.message,"error");else{showToast("Заявку оновлено","Статус змінено.");await loadApps();}});
   qsa(".admin-tab").forEach(tab=>tab.addEventListener("click",()=>{qsa(".admin-tab").forEach(x=>x.classList.remove("active"));qsa(".admin-section").forEach(x=>x.classList.remove("active"));tab.classList.add("active");$(tab.dataset.target)?.classList.add("active");}));
+
   await Promise.all([loadUsers(),loadApps(false)]);
   supabaseClient.channel("vintage-whitelist-admin").on("postgres_changes",{event:"*",schema:"public",table:"whitelist_applications"},()=>loadApps(true)).subscribe();
   setInterval(()=>loadApps(true),15000);

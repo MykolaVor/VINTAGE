@@ -1,45 +1,24 @@
-VINTAGE — Minecraft server website
+VINTAGE v22 — REDESIGN + PLAYER PROFILES
 
-Pack: TerraFirmaGreg: Modern
-Minecraft: 1.20.1 / Forge
-CurseForge: https://www.curseforge.com/minecraft/modpacks/terrafirmagreg-modern
+Base: VINTAGE v21 (password recovery + current Supabase/SMTP-compatible auth).
 
-Included:
-- VINTAGE branding
-- Interactive living-world background with parallax, fog, light sweep, particles and ambient dust
-- Pixel-inspired custom cursor
-- Supabase Auth, whitelist applications, chat and admin panel
+Preserved functionality:
+- Supabase authentication, registration, login/logout
+- Password recovery via update-password.html
+- Personal profile and Minecraft nickname editing
+- Whitelist applications and admin review
+- Community chat, emoji picker, edit/delete own messages, highlight own messages
+- Admin moderation: timed/permanent mute and ban, reasons, clear mute/ban
+- Minecraft server status and IP copy
+- TerraFirmaGreg guide with era navigation
 
-Supabase frontend uses the publishable key only. Never put a secret/service-role key in the browser.
+Redesign:
+- New premium dark VINTAGE visual system
+- Responsive glass panels, navigation, forms, chat and guide
+- Admin area transformed into a Player Profiles dashboard
+- Player cards + searchable profiles
+- Player profile modal with email, Minecraft nickname, registration date, whitelist state and moderation state
+- Moderation controls remain available from the player profile
+- Admin navigation is now labeled “Гравці”
 
-Replace play.example.com in script.js with the real Minecraft server IP.
-
-
-V8: Кабінет винесено на окрему сторінку account.html.
-
-VINTAGE v17 — separate sections
-- account.html — login/register
-- profile.html — player profile
-- whitelist.html — whitelist applications
-- chat.html — community chat with emoji picker and personal highlights
-- admin.html — admin console with users, whitelist review, mute/ban controls
-- guide.html — guide
-
-IMPORTANT:
-Run SUPABASE_MIGRATION_V17.sql once in Supabase SQL Editor before using moderation/highlight features.
-The migration creates user_moderation, chat message highlights, server-side moderation checks, and admin RPCs.
-No passwords are stored in the public profiles table; authentication remains in Supabase Auth.
-
-
-V18 patch: fixed Supabase relation ambiguity for whitelist_applications (two profiles foreign keys), and added own-message edit/delete plus admin delete.
-SQL: run SUPABASE_MIGRATION_V18.sql once after V17.
-
-
-V20 SERVER STATUS
-- Server IP configured: 134.255.209.65:10030
-- Home page shows live Java Minecraft status using the MCSRVSTATUS API.
-- Player count is shown as online/max when the API returns it.
-- API responses are cached by the provider for about 5 minutes.
-
-
-V21: додано відновлення пароля через Supabase Auth. У Supabase Authentication → URL Configuration додайте https://vintage.mcvintage.workers.dev/update-password.html у Redirect URLs.
+No new Supabase migration is required for the redesign itself. Existing v17/v18 database functions and policies are used.
