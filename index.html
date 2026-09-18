@@ -1,8 +1,137 @@
-<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VINTAGE — Minecraft Server</title><link rel="stylesheet" href="style.css?v=24"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head><body><canvas id="particles"></canvas><div class="background"></div><div class="overlay"></div><div class="world-fog"></div><div class="vignette"></div><div class="cursor-glow"></div><div class="interactive-grid"></div><div class="interactive-orb orb-one"></div><div class="interactive-orb orb-two"></div>
-<header class="navbar"><a class="brand" href="index.html"><img src="assets/logo.png" alt="VINTAGE"><span>VINTAGE</span></a><nav id="site-nav"><a href="index.html" class="active">Головна</a><a href="#about">Про сервер</a><a href="#how-to-play">Як грати</a><a href="#rules">Правила</a><a href="guide.html">Гайд</a><a href="whitelist.html">Whitelist</a><a href="chat.html">Чат</a><a href="profile.html">Кабінет</a><a id="admin-nav" href="admin.html" class="hidden">Гравці</a></nav><div id="nav-auth"></div><button id="mobile-menu" class="mobile-menu" aria-label="Відкрити меню">☰</button></header>
-<main class="hero"><div class="hero-logo-wrap"><img class="server-logo" src="assets/logo.png" alt="VINTAGE Server"></div><div class="hero-content"><div class="eyebrow"><span></span> MINECRAFT SURVIVAL SERVER</div><h1>VINTAGE</h1><p class="subtitle">TerraFirmaGreg: Modern</p><p class="description">Виживання, дослідження та індустріальний прогрес. Почни з простих інструментів і створи власну технологічну імперію.</p><div class="buttons"><button class="play-button" type="button" onclick="copyIP()">СКОПІЮВАТИ IP</button><a href="#how-to-play" class="secondary-button">ЯК ГРАТИ</a></div><div class="server-status"><span class="status-dot status-dot-muted"></span><div><strong id="server-status-text">Перевірка сервера…</strong><small id="server-ip">134.255.209.65:10030</small></div><div class="players"><b id="player-count">—</b><small>гравців</small></div><span id="server-status-badge" class="status-badge">CHECK</span></div></div><div class="scroll-hint">ПРОКРУТІТЬ ВНИЗ <span>↓</span></div></main>
-<section class="features" id="about"><div class="section-tag">01 — ПРО СЕРВЕР</div><h2>СВІТ <span>VINTAGE</span></h2><p class="section-description">Тут кожен етап розвитку має значення — від виживання в дикій природі до складних індустріальних ланцюгів.</p><div class="feature-grid"><article class="feature"><div class="feature-icon">⛏</div><h3>Виживання</h3><p>Небезпечний світ, ресурси та відчуття справжнього прогресу.</p></article><article class="feature"><div class="feature-icon">⚙</div><h3>Індустрія</h3><p>Будуй виробництво, автоматизуй процеси та розвивай технології.</p></article><article class="feature"><div class="feature-icon">🌍</div><h3>Дослідження</h3><p>Відкривай території, шукай ресурси та створюй власну базу.</p></article></div></section>
-<section class="info-section" id="how-to-play"><div class="section-tag">02 — ПОЧАТОК</div><h2>ГОТОВИЙ <span>ГРАТИ?</span></h2><p>Встанови оригінальну збірку TerraFirmaGreg: Modern, додай сервер у Multiplayer та вирушай у пригоду.</p><div class="install-card"><div class="install-card-icon">⚙</div><div class="install-card-content"><h3>TerraFirmaGreg: Modern</h3><p>Minecraft 1.20.1 • Forge • Офіційна сторінка модпака</p><a class="curseforge-button" href="https://www.curseforge.com/minecraft/modpacks/terrafirmagreg-modern" target="_blank" rel="noopener noreferrer">ВІДКРИТИ CURSEFORGE ↗</a></div></div><div class="license-notice"><strong>⚠ ПОТРІБНА ЛІЦЕНЗІЙНА КОПІЯ MINECRAFT</strong><p>Для гри потрібен придбаний Minecraft Java Edition та обліковий запис Microsoft.</p></div></section>
-<section class="info-section" id="rules"><div class="section-tag">03 — ПРАВИЛА</div><h2>ГРАЙ <span>ЧЕСНО</span></h2><p>Поважай інших гравців, не руйнуй чужі споруди та не використовуй чити, експлойти чи навмисне втручання в роботу сервера. Не спам, не ображай інших і не заважай грі спільноти.</p><div class="feature-grid"><article class="feature"><h3>🤝 Повага</h3><p>Без образ, переслідування та навмисної провокації інших гравців.</p></article><article class="feature"><h3>🏠 Чужі споруди</h3><p>Не ламай і не забирай чуже майно без дозволу власника.</p></article><article class="feature"><h3>🛡️ Чесна гра</h3><p>Без читів, дюпів та використання помилок гри для отримання переваги.</p></article></div></section>
-<section class="info-section" id="community"><div class="section-tag">04 — СПІЛЬНОТА</div><h2>БУДЬ <span>ЧАСТИНОЮ</span></h2><p>Створи профіль, подай Whitelist-заявку та спілкуйся з іншими гравцями прямо на сайті.</p><div class="buttons"><a class="secondary-button" href="whitelist.html">ПОДАТИ WHITELIST</a><a class="secondary-button" href="chat.html">ВІДКРИТИ ЧАТ</a><a class="secondary-button" href="guide.html">ПЕРЕГЛЯНУТИ ГАЙД</a></div></section>
-<footer><p>© 2026 VINTAGE Server · TerraFirmaGreg: Modern</p></footer><div id="toast-container" class="toast-container" aria-live="polite"></div><script src="script.js?v=24"></script></body></html>
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VINTAGE — TerraFirmaGreg: Modern</title>
+<link rel="stylesheet" href="style.css?v=27">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="home-page">
+  <canvas id="particles"></canvas>
+  <div class="background"></div><div class="overlay"></div><div class="world-fog"></div><div class="vignette"></div>
+  <div class="cursor-glow"></div><div class="interactive-grid"></div><div class="interactive-orb orb-one"></div><div class="interactive-orb orb-two"></div>
+
+  <header class="navbar">
+    <a class="brand" href="index.html"><span class="brand-mark">V</span><span>VINTAGE</span></a>
+    <nav id="site-nav">
+      <a href="index.html" class="active">Головна</a>
+      <a href="#about">Про сервер</a>
+      <a href="#how-to-play">Як грати</a>
+      <a href="#rules">Правила</a>
+      <a href="guide.html">Гайд</a>
+      <a href="whitelist.html">Whitelist</a>
+      <a href="chat.html">Чат</a>
+      <a href="profile.html">Кабінет</a>
+      <a id="admin-nav" href="admin.html" class="hidden">Гравці</a>
+    </nav>
+    <div id="nav-auth"></div>
+    <button id="mobile-menu" class="mobile-menu" aria-label="Відкрити меню">☰</button>
+  </header>
+
+  <main>
+    <section class="v26-hero">
+      <div class="hero-stars"></div>
+      <div class="hero-copy reveal-up">
+        <div class="hero-kicker"><span></span> TERRAFIRMA SURVIVAL · JAVA EDITION <span></span></div>
+        <div class="hero-logo-frame">
+          <div class="hero-logo-glow"></div>
+          <img class="hero-emblem" src="assets/logo.png" alt="VINTAGE TerraFirmaGreg">
+        </div>
+        <p class="hero-version">TerraFirmaGreg: Modern <b>•</b> Minecraft 1.20.1 <b>•</b> Forge</p>
+        <p class="hero-description">Світ, де виживання — лише початок. Добувай ресурси, досліджуй невідоме, будуй виробництво та розвивай власну історію.</p>
+        <div class="hero-actions">
+          <button class="v26-btn primary" type="button" onclick="copyIP()">СКОПІЮВАТИ IP</button>
+          <a class="v26-btn ghost" href="#how-to-play">ЯК ПОЧАТИ <span>↓</span></a>
+        </div>
+        <div class="hero-server-bar">
+          <div class="live-state"><span class="status-dot status-dot-muted"></span><div><small>СТАТУС СЕРВЕРА</small><strong id="server-status-text">Перевірка сервера…</strong></div></div>
+          <button class="ip-block" type="button" onclick="copyIP()"><small>АДРЕСА</small><strong id="server-ip">134.255.209.65:10030</strong><span>Копіювати</span></button>
+          <div class="online-block"><small>ОНЛАЙН</small><strong id="player-count">—</strong></div>
+          <span id="server-status-badge" class="status-badge">CHECK</span>
+        </div>
+      </div>
+      <div class="hero-scroll">ПРОКРУТІТЬ <span>↓</span></div>
+    </section>
+
+    <section class="v26-stats" aria-label="Інформація про сервер">
+      <div><span>01</span><strong>TerraFirmaGreg</strong><small>MODPACK</small></div>
+      <div><span>02</span><strong>1.20.1</strong><small>MINECRAFT + FORGE</small></div>
+      <div><span>03</span><strong>WHITELIST</strong><small>ДОСТУП ЧЕРЕЗ САЙТ</small></div>
+      <div><span>04</span><strong>VINTAGE</strong><small>ВЛАСНИЙ СВІТ</small></div>
+    </section>
+
+    <section class="v26-section live-stats-section" id="statistics">
+      <div class="section-head centered reveal-up"><div class="section-tag">01.5 — СТАТИСТИКА</div><h2>VINTAGE У <span>ЦИФРАХ</span></h2><p>Актуальні дані спільноти зберігаються у VINTAGE та оновлюються автоматично.</p></div>
+      <div class="live-stats-grid">
+        <article class="live-stat-card reveal-up"><span>ГРАВЦІ</span><strong id="stat-registered">—</strong><small>зареєстровано</small></article>
+        <article class="live-stat-card reveal-up delay-1"><span>WHITELIST</span><strong id="stat-approved">—</strong><small>заявок прийнято</small></article>
+        <article class="live-stat-card reveal-up delay-2"><span>ЧАТ</span><strong id="stat-messages">—</strong><small>повідомлень</small></article>
+        <article class="live-stat-card reveal-up"><span>ЗАЯВКИ</span><strong id="stat-applications">—</strong><small>усього подано</small></article>
+      </div>
+    </section>
+
+    <section class="v26-section intro-section" id="about">
+      <div class="section-head reveal-up"><div class="section-tag">01 — ПРО СЕРВЕР</div><h2>ЦЕ НЕ ПРОСТО<br><span>MINECRAFT</span></h2><p>VINTAGE побудований навколо довгого прогресу TerraFirmaGreg: від перших кам'яних інструментів до складної промисловості. Тут важливі ресурси, знання, підготовка та рішення гравців.</p></div>
+      <div class="feature-rail">
+        <article class="v26-card reveal-up"><div class="card-number">01</div><div class="card-icon">⛏</div><h3>Справжнє виживання</h3><p>Природа не віддає ресурси просто так. Плануй маршрут, запаси та розвиток бази.</p></article>
+        <article class="v26-card reveal-up delay-1"><div class="card-number">02</div><div class="card-icon">⚙</div><h3>Індустріальний прогрес</h3><p>Розвивай виробництво, автоматизуй процеси та поступово переходь до складніших технологій.</p></article>
+        <article class="v26-card reveal-up delay-2"><div class="card-number">03</div><div class="card-icon">◇</div><h3>Дослідження світу</h3><p>Шукай рідкісні ресурси, відкривай нові місця та створюй власну історію на сервері.</p></article>
+      </div>
+    </section>
+
+    <section class="v26-section how-section" id="how-to-play">
+      <div class="section-head centered reveal-up"><div class="section-tag">02 — ЯК ПОЧАТИ</div><h2>ТРИ КРОКИ ДО<br><span>VINTAGE</span></h2><p>Без зайвих складнощів: акаунт → whitelist → модпак → гра.</p></div>
+      <div class="steps-grid">
+        <article class="step-card reveal-up"><div class="step-top"><span>01</span><i>⌁</i></div><h3>Створи акаунт</h3><p>Зареєструйся на сайті VINTAGE та відкрий особистий кабінет.</p><a href="account.html">ПЕРЕЙТИ ДО АКАУНТА ↗</a></article>
+        <article class="step-card reveal-up delay-1"><div class="step-top"><span>02</span><i>✓</i></div><h3>Подай Whitelist</h3><p>Вкажи свій Minecraft-нік та коротко розкажи, чому хочеш грати на VINTAGE.</p><a href="whitelist.html">ПОДАТИ ЗАЯВКУ ↗</a></article>
+        <article class="step-card reveal-up delay-2"><div class="step-top"><span>03</span><i>➜</i></div><h3>Встанови збірку</h3><p>Запусти TerraFirmaGreg: Modern 1.20.1 Forge, додай IP та вирушай у світ.</p><a href="guide.html">ВІДКРИТИ ГАЙД ↗</a></article>
+      </div>
+      <div class="join-panel reveal-up"><div><small>SERVER ADDRESS</small><strong>134.255.209.65:10030</strong></div><button class="v26-btn primary" onclick="copyIP()">КОПІЮВАТИ IP</button></div>
+    </section>
+
+    <section class="v26-section features-section">
+      <div class="section-head reveal-up"><div class="section-tag">03 — ОСОБЛИВОСТІ</div><h2>СВІТ, ЯКИЙ<br><span>РОЗВИВАЄТЬСЯ</span></h2></div>
+      <div class="feature-matrix">
+        <article class="matrix-card large reveal-up"><span>01</span><div><b>TerraFirmaGreg: Modern</b><p>Глибокий модпак із великим шляхом прогресу та технологічними етапами.</p></div><strong>⚙</strong></article>
+        <article class="matrix-card reveal-up delay-1"><span>02</span><b>Економіка гравців</b><p>Торгівля, обмін ресурсами та власні способи розвивати спільноту.</p></article>
+        <article class="matrix-card reveal-up delay-2"><span>03</span><b>Власні проєкти</b><p>Будуй базу, майстерню, ферми, фабрики та цілі комплекси.</p></article>
+        <article class="matrix-card reveal-up"><span>04</span><b>Дослідження</b><p>Вирушай далеко від старту за новими ресурсами та можливостями.</p></article>
+        <article class="matrix-card reveal-up delay-1"><span>05</span><b>Спільнота</b><p>Discord, сайт, чат та спільні події об'єднують гравців поза грою.</p></article>
+      </div>
+    </section>
+
+    <section class="v26-section guide-highlight" id="guide">
+      <div class="guide-visual reveal-up"><div class="ore-glow"></div><div class="ore-symbol">⛏</div><span>CRAFT<br>EXPLORE<br>PROGRESS</span></div>
+      <div class="guide-copy reveal-up delay-1"><div class="section-tag">04 — ГАЙД</div><h2>ПОЧНИ<br><span>ПРАВИЛЬНО</span></h2><p>TerraFirmaGreg має багато механік. Ми зібрали окремий гайд, щоб новому гравцю було легше пройти перші етапи та зрозуміти логіку розвитку.</p><div class="hero-actions"><a class="v26-btn primary" href="guide.html">ВІДКРИТИ ГАЙД</a><a class="v26-btn ghost" href="https://www.curseforge.com/minecraft/modpacks/terrafirmagreg-modern" target="_blank" rel="noopener noreferrer">CURSEFORGE ↗</a></div></div>
+    </section>
+
+    <section class="v26-section rules-section" id="rules">
+      <div class="section-head reveal-up"><div class="section-tag">05 — ПРАВИЛА</div><h2>ГРАЙ ВІЛЬНО.<br><span>ГРАЙ ВІДПОВІДАЛЬНО.</span></h2><p>На VINTAGE багато що залежить від самих гравців. Війни, PvP, рейди, союзи, торгівля та власна історія світу — частина живого сервера. Заборонені чити, експлойти, краш сервера, обхід приватного захисту та переслідування реальних людей.</p></div>
+      <div class="rules-list reveal-up"><div><b>✓</b><span>Поважай інших гравців</span></div><div><b>✓</b><span>Використовуй чесний клієнт</span></div><div><b>✓</b><span>Не ламай роботу сервера</span></div><div><b>✓</b><span>Не обходь приватний захист</span></div></div>
+    </section>
+
+    <section class="v26-community" id="community">
+      <div class="community-glow"></div><div class="community-content reveal-up"><div class="section-tag">06 — СПІЛЬНОТА</div><h2>VINTAGE<br><span>ПОЧИНАЄТЬСЯ З ТЕБЕ</span></h2><p>Слідкуй за новинами, шукай напарників, обговорюй прогрес і отримуй допомогу в Discord.</p><a class="discord-btn" href="https://discord.gg/Y9hD5jWHr" target="_blank" rel="noopener noreferrer"><span>◉</span><div><small>НАША СПІЛЬНОТА</small><strong>ПРИЄДНАТИСЯ ДО DISCORD</strong></div><b>↗</b></a></div>
+    </section>
+
+    <section class="v26-section faq-section">
+      <div class="section-head centered reveal-up"><div class="section-tag">07 — FAQ</div><h2>ЧАСТІ<br><span>ПИТАННЯ</span></h2></div>
+      <div class="faq-list">
+        <details class="faq-item reveal-up"><summary>Яка версія Minecraft потрібна?</summary><p>Minecraft Java Edition 1.20.1 з Forge та збіркою TerraFirmaGreg: Modern.</p></details>
+        <details class="faq-item reveal-up"><summary>Який IP сервера?</summary><p><button class="inline-copy" onclick="copyIP()">134.255.209.65:10030</button></p></details>
+        <details class="faq-item reveal-up"><summary>Чи потрібен Whitelist?</summary><p>Так. Спочатку створи акаунт на сайті, потім подай заявку у розділі Whitelist.</p></details>
+        <details class="faq-item reveal-up"><summary>Де знайти модпак?</summary><p>На CurseForge є офіційна сторінка TerraFirmaGreg: Modern. Також на сайті є окремий гайд для старту.</p></details>
+        <details class="faq-item reveal-up"><summary>Де спілкуватися з іншими гравцями?</summary><p>На сайті працює чат, а для основної спільноти та новин використовується Discord VINTAGE.</p></details>
+      </div>
+    </section>
+
+    <section class="v26-final reveal-up"><div class="final-lines"></div><div class="section-tag">08 — READY?</div><h2>ПОЧНЕМО<br><span>ТВОЮ ІСТОРІЮ?</span></h2><p>Створи акаунт, отримай доступ та приєднуйся до світу VINTAGE.</p><div class="hero-actions"><a class="v26-btn primary" href="account.html">СТВОРИТИ АКАУНТ</a><a class="v26-btn ghost" href="https://discord.gg/Y9hD5jWHr" target="_blank" rel="noopener noreferrer">DISCORD ↗</a></div></section>
+  </main>
+
+  <footer class="v26-footer"><div><a class="footer-brand" href="index.html"><span>V</span> VINTAGE</a><p>TerraFirmaGreg: Modern · Minecraft 1.20.1</p></div><div class="footer-links"><a href="guide.html">Гайд</a><a href="whitelist.html">Whitelist</a><a href="chat.html">Чат</a><a href="profile.html">Кабінет</a><a href="https://discord.gg/Y9hD5jWHr" target="_blank" rel="noopener noreferrer">Discord</a></div><div class="footer-copy">© 2026 VINTAGE</div></footer>
+
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+  <script src="script.js?v=27"></script>
+</body>
+</html>

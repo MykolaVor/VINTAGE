@@ -71,7 +71,7 @@ async function refreshAuth(){
   const {data:{session}}=await supabaseClient.auth.getSession();
   currentUser=session?.user||null; currentProfile=null;
   if(currentUser){
-    const {data}=await supabaseClient.from("profiles").select("id,username,minecraft_nickname,role").eq("id",currentUser.id).maybeSingle();
+    const {data}=await supabaseClient.from("profiles").select("id,username,minecraft_nickname,role,created_at,discord_username,bio").eq("id",currentUser.id).maybeSingle();
     currentProfile=data||null;
   }
   setNavLoggedIn(currentProfile); return currentUser;
@@ -90,10 +90,34 @@ function fallbackCopyIP(done){const ta=document.createElement("textarea");ta.val
 window.copyIP=copyIP;
 
 async function loadServerStatus(){
-  const ip=$("server-ip"),count=$("player-count"),status=$("server-status-text"),dot=qs(".server-status .status-dot"),badge=$("server-status-badge");
+  const ip=$("server-ip"),count=$("player-count"),status=$("server-status-text"),dot=qs(".live-state .status-dot"),badge=$("server-status-badge");
   if(ip)ip.textContent=SERVER_IP;
   const setState=(online,players=0,max=20)=>{if(status)status.textContent=online?"Сервер онлайн":"Сервер офлайн";if(count)count.textContent=online?`${players}/${max||20}`:"—";if(dot){dot.classList.toggle("status-dot-online",online);dot.classList.toggle("status-dot-muted",!online)}if(badge){badge.textContent=online?"ONLINE":"OFFLINE";badge.classList.toggle("online",online)}};
   try{const r=await fetch(SERVER_STATUS_API,{cache:"no-store"});if(!r.ok)throw Error();const d=await r.json();setState(Boolean(d.online),Number(d.players?.online||0),Number(d.players?.max||20));}catch{setState(false)}
+}
+
+async function loadPublicStats(){
+  const ids=["stat-registered","stat-approved","stat-messages","stat-applications"];
+  if(!ids.some(id=>$(id))) return;
+  try{
+    const {data,error}=await supabaseClient.from("profiles").select("id",{count:"exact",head:true});
+    if(error) throw error;
+    const {data:stats,error:rpcError}=await supabaseClient.rpc("get_public_server_stats");
+    if(rpcError) throw rpcError;
+    const row=stats?.[0]||stats;
+    $("stat-registered").textContent=Number(row?.registered_players??data?.length??0).toLocaleString("uk-UA");
+    $("stat-approved").textContent=Number(row?.approved_players??0).toLocaleString("uk-UA");
+    $("stat-messages").textContent=Number(row?.chat_messages??0).toLocaleString("uk-UA");
+    $("stat-applications").textContent=Number(row?.whitelist_applications??0).toLocaleString("uk-UA");
+  }catch(e){ ids.forEach(id=>{if($(id))$(id).textContent="—"}); }
+}
+
+function skinUrl(nickname){return nickname?`https://mc-heads.net/avatar/${encodeURIComponent(nickname)}/128.png`:null;}
+async function getPublicPlayerProfile(userId){
+  if(!supabaseClient||!userId)return null;
+  const {data,error}=await supabaseClient.rpc("get_public_player_profiles");
+  if(error) return null;
+  return (data||[]).find(x=>x.id===userId)||null;
 }
 
 let authMode="login";
@@ -119,18 +143,41 @@ function setupAuthPage(){
 
 function setupPasswordUpdatePage(){
   const form=$("password-update-form");if(!form)return;const password=$("new-password"),confirm=$("confirm-password"),msg=$("password-update-message");
-  let recoveryReady=false;
-  supabaseClient?.auth.onAuthStateChange(event=>{if(event==="PASSWORD_RECOVERY"){recoveryReady=true;msg.textContent="Введи новий пароль."}});
+  supabaseClient?.auth.onAuthStateChange(event=>{if(event==="PASSWORD_RECOVERY"){msg.textContent="Введи новий пароль."}});
   form.addEventListener("submit",async e=>{e.preventDefault();if(!supabaseClient)return;if(password.value.length<6){msg.textContent="Пароль має містити щонайменше 6 символів.";return}if(password.value!==confirm.value){msg.textContent="Паролі не збігаються.";return}msg.textContent="Зберігаємо…";const {error}=await supabaseClient.auth.updateUser({password:password.value});if(error){msg.textContent=error.message;showToast("Помилка",error.message,"error");return}msg.textContent="Пароль змінено.";showToast("Готово","Пароль успішно змінено.");setTimeout(()=>location.href="profile.html",800)});
 }
 
 async function setupProfilePage(){
-  const page=$("profile-page");if(!page)return;const user=await refreshAuth(),guest=$("profile-guest"),content=$("profile-content");
+  const page=$("profile-page");if(!page)return;
+  const user=await refreshAuth(),guest=$("profile-guest"),content=$("profile-content");
   if(!user){guest?.classList.remove("hidden");content?.classList.add("hidden");return}
   guest?.classList.add("hidden");content?.classList.remove("hidden");
   const username=currentProfile?.username||user.email?.split("@")[0]||"Гравець";
-  $("profile-username").textContent=username;$("profile-email").textContent=user.email||"—";$("profile-minecraft").textContent=currentProfile?.minecraft_nickname||"Не вказано";$("profile-minecraft-input").value=currentProfile?.minecraft_nickname||"";$("profile-role").textContent=currentProfile?.role==="admin"?"ADMIN":"PLAYER";
-  $("profile-minecraft-form")?.addEventListener("submit",async e=>{e.preventDefault();const v=$("profile-minecraft-input").value.trim();const {error}=await supabaseClient.from("profiles").update({minecraft_nickname:v||null}).eq("id",user.id);if(error)showToast("Профіль",error.message,"error");else{currentProfile=currentProfile||{};currentProfile.minecraft_nickname=v;$("profile-minecraft").textContent=v||"Не вказано";showToast("Профіль","Minecraft-нік збережено.")}});
+  const publicProfile=await getPublicPlayerProfile(user.id);
+  $("profile-username").textContent=username;
+  $("profile-username-input").value=username;
+  $("profile-email").textContent=user.email||"—";
+  $("profile-minecraft").textContent=currentProfile?.minecraft_nickname||"Не вказано";
+  $("profile-minecraft-input").value=currentProfile?.minecraft_nickname||"";
+  $("profile-discord-input").value=currentProfile?.discord_username||"";
+  $("profile-bio-input").value=currentProfile?.bio||"";
+  $("profile-role").textContent=currentProfile?.role==="admin"?"ADMIN":"PLAYER";
+  $("profile-created").textContent=currentProfile?.created_at?fmtDate(currentProfile.created_at):"—";
+  const approved=Boolean(publicProfile?.whitelist_approved);
+  $("profile-whitelist-state").textContent=approved?"✓ Whitelist підтверджено":"○ Whitelist ще не підтверджено";
+  const skin=$("profile-skin");
+  if(approved&&publicProfile?.minecraft_nickname){skin.src=skinUrl(publicProfile.minecraft_nickname);skin.classList.remove("fallback-skin");skin.alt=`Minecraft-голова ${publicProfile.minecraft_nickname}`;skin.onerror=()=>{skin.src="assets/logo.png";skin.classList.add("fallback-skin")};}
+  $("profile-settings-form")?.addEventListener("submit",async e=>{
+    e.preventDefault();const msg=$("profile-settings-message");msg.textContent="Зберігаємо…";
+    const minecraft=$("profile-minecraft-input").value.trim();
+    if(minecraft && !/^[A-Za-z0-9_]{3,16}$/.test(minecraft)){msg.textContent="Minecraft-нік має містити 3–16 символів: латинські літери, цифри або _ .";return}
+    const discord=$("profile-discord-input").value.trim();const bio=$("profile-bio-input").value.trim();
+    const {error}=await supabaseClient.from("profiles").update({minecraft_nickname:minecraft||null,discord_username:discord||null,bio:bio||null}).eq("id",user.id);
+    if(error){msg.textContent=error.message;showToast("Профіль",error.message,"error");return}
+    currentProfile={...(currentProfile||{}),minecraft_nickname:minecraft,discord_username:discord,bio};
+    $("profile-minecraft").textContent=minecraft||"Не вказано";msg.textContent="Зміни збережено.";showToast("Профіль","Налаштування успішно збережено.");
+    const fresh=await getPublicPlayerProfile(user.id);if(fresh?.whitelist_approved&&fresh.minecraft_nickname){skin.src=skinUrl(fresh.minecraft_nickname);skin.classList.remove("fallback-skin");}
+  });
   $("logout-btn")?.addEventListener("click",async()=>{await supabaseClient.auth.signOut();location.href="account.html"});
 }
 
@@ -148,11 +195,12 @@ async function chatModerationState(userId){
   const {data,error}=await supabaseClient.from("user_moderation").select("type,expires_at,reason,active").eq("user_id",userId).eq("active",true);if(error)return {mute:null,ban:null};
   const now=Date.now(),active=(data||[]).filter(x=>!x.expires_at||new Date(x.expires_at).getTime()>now);return {mute:active.find(x=>x.type==="mute")||null,ban:active.find(x=>x.type==="ban")||null};
 }
+async function getPublicPlayerProfileList(){if(!supabaseClient)return [];const {data}=await supabaseClient.rpc("get_public_player_profiles");return data||[];}
 async function setupChatPage(){
   const page=$("chat-page");if(!page)return;const user=await refreshAuth();if(!user){$("chat-guest")?.classList.remove("hidden");return}$("chat-content")?.classList.remove("hidden");
-  const box=$("chat-box"),form=$("chat-form"),input=$("chat-input"),msg=$("chat-message"),emojiBox=$("emoji-picker");let firstLoad=true;
+  const box=$("chat-box"),form=$("chat-form"),input=$("chat-input"),msg=$("chat-message"),emojiBox=$("emoji-picker");let firstLoad=true;let publicPlayers=[];
   function scrollBottom(force=false){if(!box)return;const near=box.scrollHeight-box.scrollTop-box.clientHeight<100;if(force||near)box.scrollTop=box.scrollHeight}
-  async function load(){const wasNear=!box||box.scrollHeight-box.scrollTop-box.clientHeight<100;const {data,error}=await supabaseClient.from("chat_messages").select("id,user_id,message,created_at,highlighted,profiles!chat_messages_user_id_fkey(username,role)").order("created_at",{ascending:true}).limit(150);if(error){box.innerHTML=`<div class="empty-state">${escapeHTML(error.message)}</div>`;return}box.innerHTML=(data||[]).map(m=>{const mine=m.user_id===user.id,admin=currentProfile?.role==="admin";return `<article class="chat-message ${mine?"mine":""} ${m.highlighted?"highlighted":""}" data-id="${escapeHTML(m.id)}"><div class="chat-head"><span class="name">${escapeHTML(m.profiles?.username||"гравець")}</span>${m.profiles?.role==="admin"?'<span class="role-label">ADMIN</span>':''}<time>${fmtDate(m.created_at)}</time></div><div class="text">${escapeHTML(m.message).replace(/\n/g,"<br>")}</div>${mine||admin?`<div class="chat-actions">${mine?`<button class="chat-edit" type="button">✎ Редагувати</button><button class="highlight-toggle" type="button" data-highlight="${m.highlighted}">${m.highlighted?"★ Прибрати":"☆ Виділити"}</button>`:""}<button class="chat-delete danger-button" type="button">✕ Видалити</button></div>`:""}</article>`}).join("")||`<div class="empty-state">Поки що повідомлень немає. Будь першим!</div>`;if(firstLoad||wasNear)scrollBottom(true);firstLoad=false}
+  async function load(){const wasNear=!box||box.scrollHeight-box.scrollTop-box.clientHeight<100;const players=await getPublicPlayerProfileList();publicPlayers=players;const {data,error}=await supabaseClient.from("chat_messages").select("id,user_id,message,created_at,highlighted,profiles!chat_messages_user_id_fkey(username,role,minecraft_nickname)").order("created_at",{ascending:true}).limit(150);if(error){box.innerHTML=`<div class="empty-state">${escapeHTML(error.message)}</div>`;return}box.innerHTML=(data||[]).map(m=>{const mine=m.user_id===user.id,admin=currentProfile?.role==="admin";const pub=publicPlayers.find(x=>x.id===m.user_id);const player=pub?.minecraft_nickname?pub:null;const avatar=player?.whitelist_approved&&player.minecraft_nickname?`<img class="chat-avatar skin-chat" src="${skinUrl(player.minecraft_nickname)}" alt="Minecraft-голова" loading="lazy" onerror="this.src='assets/logo.png';this.classList.add('fallback-skin')">`:`<div class="chat-avatar">${escapeHTML((m.profiles?.username||"Г").trim().charAt(0).toUpperCase())}</div>`;return `<article class="chat-message ${mine?"mine":""} ${m.highlighted?"highlighted":""}" data-id="${escapeHTML(m.id)}"><div class="chat-head">${avatar}<div class="chat-author"><span class="name">${escapeHTML(m.profiles?.username||"гравець")}</span>${m.profiles?.role==="admin"?'<span class="role-label">ADMIN</span>':''}<time>${fmtDate(m.created_at)}</time></div></div><div class="text">${escapeHTML(m.message).replace(/\n/g,"<br>")}</div>${mine||admin?`<div class="chat-actions">${mine?`<button class="chat-edit" type="button">✎ Редагувати</button><button class="highlight-toggle" type="button" data-highlight="${m.highlighted}">${m.highlighted?"★ Прибрати":"☆ Виділити"}</button>`:""}<button class="chat-delete danger-button" type="button">✕ Видалити</button></div>`:""}</article>`}).join("")||`<div class="empty-state">Поки що повідомлень немає. Будь першим!</div>`;if(firstLoad||wasNear)scrollBottom(true);firstLoad=false}
   buildEmojiPicker();$("emoji-toggle")?.addEventListener("click",()=>emojiBox?.classList.toggle("hidden"));emojiBox?.addEventListener("click",e=>{const b=e.target.closest("[data-emoji]");if(b){input.value+=b.dataset.emoji;input.focus();emojiBox.classList.add("hidden")}});document.addEventListener("click",e=>{if(!e.target.closest(".chat-compose"))emojiBox?.classList.add("hidden")});
   box.addEventListener("click",async e=>{const article=e.target.closest(".chat-message");if(!article)return;const id=article.dataset.id;
     const highlight=e.target.closest(".highlight-toggle");if(highlight){const next=highlight.dataset.highlight!=="true";const {error}=await supabaseClient.from("chat_messages").update({highlighted:next}).eq("id",id).eq("user_id",user.id);if(error)showToast("Чат",error.message,"error");else await load();return}
@@ -190,4 +238,4 @@ async function setupAdminPage(){
 
 function setupGuide(){qsa(".era").forEach(b=>b.addEventListener("click",()=>{qsa(".era,.guide-section").forEach(x=>x.classList.remove("active"));b.classList.add("active");qs(`[data-panel="${b.dataset.era}"]`)?.classList.add("active")}))}
 
-(async()=>{await refreshAuth();loadServerStatus();setupAuthPage();setupPasswordUpdatePage();await setupProfilePage();await setupWhitelistPage();await setupChatPage();await setupAdminPage();setupGuide()})();
+(async()=>{await refreshAuth();loadServerStatus();loadPublicStats();setupAuthPage();setupPasswordUpdatePage();await setupProfilePage();await setupWhitelistPage();await setupChatPage();await setupAdminPage();setupGuide()})();
