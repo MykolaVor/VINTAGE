@@ -1,0 +1,9 @@
+{
+  "supabaseUrl": "https://mqavqelpvjfreagcxemp.supabase.co",
+  "supabasePublishableKey": "sb_publishable_eXRi9dicKYjn3EpVJmgwNw_yo38UK-0",
+  "bridgeToken": "bcglTDpYK4srAiXGbxyconNd3-XbgqNZGXHSDKbk3I8",
+  "serverProperties": "../server.properties",
+  "worldStats": "../world/stats",
+  "usercache": "../usercache.json",
+  "pollMs": 30000
+}
